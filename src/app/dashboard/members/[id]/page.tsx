@@ -1,9 +1,30 @@
-import { notFound } from "next/navigation";
+'use client';
+
+import { useMemo } from 'react';
+import { notFound } from 'next/navigation';
 import Image from 'next/image';
-import { members } from "@/lib/data";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Cake, Gift, Home, Utensils, Brush, Phone } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { doc } from 'firebase/firestore';
+
+import { useDoc, useFirestore } from '@/firebase';
+import type { Member } from '@/lib/data';
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card';
+import {
+  Cake,
+  Gift,
+  Home,
+  Utensils,
+  Brush,
+  Phone,
+  Loader2,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 type MajorBirthday = {
   name: string;
@@ -11,7 +32,10 @@ type MajorBirthday = {
 };
 
 function calculateMajorBirthdays(birthDate: string): MajorBirthday[] {
+  if (!birthDate) return [];
   const birthYear = new Date(birthDate).getFullYear();
+  if (isNaN(birthYear)) return [];
+
   return [
     { name: '환갑 (61세)', year: birthYear + 60 },
     { name: '칠순 (70세)', year: birthYear + 69 },
@@ -19,19 +43,36 @@ function calculateMajorBirthdays(birthDate: string): MajorBirthday[] {
   ];
 }
 
+export default function MemberProfilePage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const firestore = useFirestore();
+  const memberDoc = useMemo(() => {
+    if (!firestore || !params.id) return null;
+    return doc(firestore, 'users', params.id);
+  }, [firestore, params.id]);
 
-export default function MemberProfilePage({ params }: { params: { id: string } }) {
-  const member = members.find((m) => m.id === params.id);
+  const { data: member, loading } = useDoc<Member>(memberDoc);
+
+  if (loading) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!member) {
     notFound();
   }
-  
+
   const majorBirthdays = calculateMajorBirthdays(member.birthDate);
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
-      <div className="flex flex-col sm:flex-row items-center gap-6">
+      <div className="flex flex-col items-center gap-6 sm:flex-row">
         <Image
           src={member.avatarUrl}
           alt={`${member.name}의 아바타`}
@@ -45,8 +86,8 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
           <p className="text-lg text-muted-foreground">상세 회원 프로필</p>
         </div>
       </div>
-      
-      <div className="grid md:grid-cols-2 gap-6">
+
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>연락처 정보</CardTitle>
@@ -74,38 +115,54 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
             <CardTitle>개인 정보</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Cake className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">생일</p>
-                <p className="text-base">{new Date(member.birthDate).toLocaleDateString('ko-KR')} {member.isLunar && <Badge variant="outline">음력</Badge>}</p>
+            {member.birthDate && (
+              <div className="flex items-center gap-3">
+                <Cake className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">생일</p>
+                  <p className="text-base">
+                    {new Date(member.birthDate).toLocaleDateString('ko-KR')}{' '}
+                    {member.isLunar && <Badge variant="outline">음력</Badge>}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Gift className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">결혼기념일</p>
-                <p className="text-base">{new Date(member.anniversary).toLocaleDateString('ko-KR')}</p>
+            )}
+            {member.anniversary && (
+              <div className="flex items-center gap-3">
+                <Gift className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">결혼기념일</p>
+                  <p className="text-base">
+                    {new Date(member.anniversary).toLocaleDateString('ko-KR')}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
-      
-      <Card>
+
+      {majorBirthdays.length > 0 && (
+        <Card>
           <CardHeader>
             <CardTitle>주요 기념일</CardTitle>
-            <CardDescription>미래 계획을 위해 자동으로 계산된 주요 기념일입니다.</CardDescription>
+            <CardDescription>
+              미래 계획을 위해 자동으로 계산된 주요 기념일입니다.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {majorBirthdays.map((bday) => (
-                <div key={bday.name} className="p-4 bg-secondary/50 rounded-lg text-center">
-                    <p className="font-semibold">{bday.name}</p>
-                    <p className="text-2xl font-bold text-primary">{bday.year}년</p>
-                </div>
+              <div
+                key={bday.name}
+                className="p-4 text-center bg-secondary/50 rounded-lg"
+              >
+                <p className="font-semibold">{bday.name}</p>
+                <p className="text-2xl font-bold text-primary">{bday.year}년</p>
+              </div>
             ))}
           </CardContent>
         </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -128,7 +185,6 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
           </div>
         </CardContent>
       </Card>
-
     </div>
   );
 }

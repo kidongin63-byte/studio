@@ -9,6 +9,7 @@ const titles: Record<string, string> = {
   '/dashboard/rules': '우리의 회칙',
   '/dashboard/messages': '영감을 주는 메시지',
   '/dashboard/ai-summary': 'AI 요약 도구',
+  '/dashboard/admin': '관리자 모드',
 };
 
 function getTitle(pathname: string): string {

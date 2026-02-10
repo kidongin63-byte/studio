@@ -1,27 +1,39 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { members, type Member } from "@/lib/data";
+import { useState, useMemo } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { collection } from 'firebase/firestore';
+
+import { useCollection, useFirestore } from '@/firebase';
+import type { Member } from '@/lib/data';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Phone, Home, Search, User } from "lucide-react";
+  CardFooter,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Phone, Home, Search, User, Loader2 } from 'lucide-react';
 
 export default function DirectoryPage() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const firestore = useFirestore();
 
-  const filteredMembers = members.filter((member) =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const usersCollection = useMemo(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'users');
+  }, [firestore]);
+
+  const { data: members, loading } = useCollection<Member>(usersCollection);
+
+  const filteredMembers =
+    members?.filter((member) =>
+      member.name.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
 
   return (
     <div className="space-y-6">
@@ -43,7 +55,11 @@ export default function DirectoryPage() {
         />
       </div>
 
-      {filteredMembers.length > 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      ) : filteredMembers.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredMembers.map((member) => (
             <Card key={member.id} className="flex flex-col">
@@ -71,12 +87,15 @@ export default function DirectoryPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex-col sm:flex-row gap-2">
-                 <a href={`tel:${member.phone}`} className="w-full">
+                <a href={`tel:${member.phone}`} className="w-full">
                   <Button variant="outline" className="w-full">
                     <Phone className="mr-2 h-4 w-4" /> 전화
                   </Button>
                 </a>
-                <Link href={`/dashboard/members/${member.id}`} className="w-full">
+                <Link
+                  href={`/dashboard/members/${member.id}`}
+                  className="w-full"
+                >
                   <Button className="w-full">
                     <User className="mr-2 h-4 w-4" /> 프로필
                   </Button>
@@ -87,7 +106,11 @@ export default function DirectoryPage() {
         </div>
       ) : (
         <div className="text-center py-16 text-muted-foreground">
-          <p>검색과 일치하는 회원이 없습니다.</p>
+          <p>
+            {searchTerm
+              ? '검색과 일치하는 회원이 없습니다.'
+              : '등록된 회원이 없습니다.'}
+          </p>
         </div>
       )}
     </div>

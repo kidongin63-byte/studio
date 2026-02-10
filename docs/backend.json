@@ -1,0 +1,125 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's profile information.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The user's phone number."
+        },
+        "address": {
+          "type": "string",
+          "description": "The user's address."
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The user's birth date."
+        },
+        "isLunar": {
+          "type": "boolean",
+          "description": "Whether the birth date is lunar."
+        },
+        "anniversary": {
+          "type": "string",
+          "format": "date",
+          "description": "The user's wedding anniversary."
+        },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "food": {
+              "type": "string"
+            },
+            "hobbies": {
+              "type": "string"
+            }
+          }
+        },
+        "avatarUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        }
+      },
+      "required": [
+        "name",
+        "email"
+      ]
+    },
+    "Rule": {
+      "title": "Rule",
+      "description": "A rule for the group.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the rule."
+        },
+        "content": {
+          "type": "string",
+          "description": "The content of the rule."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "content"
+      ]
+    },
+    "InspirationalMessage": {
+      "title": "Inspirational Message",
+      "description": "An inspirational message from a member.",
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "author",
+        "content"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "email-password"
+    ]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Stores public profiles for all users."
+    },
+    "/rules/{ruleId}": {
+      "schema": {
+        "$ref": "#/entities/Rule"
+      },
+      "description": "Stores the group's rules."
+    },
+    "/messages/{messageId}": {
+      "schema": {
+        "$ref": "#/entities/InspirationalMessage"
+      },
+      "description": "Stores inspirational messages from members."
+    }
+  }
+}
