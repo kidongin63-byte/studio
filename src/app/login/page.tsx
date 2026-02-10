@@ -78,11 +78,11 @@ export default function LoginPage() {
         <CardHeader className="text-center">
             <div className="flex items-center gap-2 justify-center">
                 <Logo className="size-10 text-primary" />
-                <div className="flex flex-col text-left">
+                <div className="flex flex-row items-baseline gap-2">
                     <h2 className="text-2xl font-semibold tracking-tighter font-headline">
                     우정 연대기
                     </h2>
-                    <p className="text-sm text-muted-foreground -mt-1">로그인</p>
+                    <p className="text-sm text-muted-foreground">로그인</p>
                 </div>
             </div>
         </CardHeader>
