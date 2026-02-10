@@ -10,13 +10,13 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useCollection<T>(ref: Query<T> | CollectionReference<T> | null) {
-  const [data, setData] = useState<(T & { id: string })[] | null>(null);
+  const [data, setData] = useState<(T & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     if (!ref) {
-      setData(null);
+      setData([]);
       setLoading(false);
       return;
     }
