@@ -110,7 +110,7 @@ export default function SignupPage() {
       const message =
         error.code === 'auth/email-already-in-use'
           ? '이미 사용중인 이메일입니다.'
-          : '회원가입에 실패했습니다. 다시 시도해주세요.';
+          : '모든 필드를 입력했는지 다시 확인해주세요.';
       toast({
         variant: 'destructive',
         title: '회원가입 실패',
