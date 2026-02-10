@@ -130,7 +130,7 @@ export default function GalleryPage() {
         toast({
           variant: 'destructive',
           title: '업로드 실패',
-          description: '파일 업로드 중 오류가 발생했습니다.',
+          description: '파일 업로드 중 오류가 발생했습니다. 저장소 권한을 확인해주세요.',
         });
         setUploading(false);
       },
@@ -155,18 +155,13 @@ export default function GalleryPage() {
             setFileName(null);
             if(fileInputRef.current) fileInputRef.current.value = '';
           })
-          .catch(() => {
+          .catch((error) => {
             const permissionError = new FirestorePermissionError({
                 path: galleryCollection.path,
                 operation: 'create',
                 requestResourceData: newGalleryItemData,
             });
             errorEmitter.emit('permission-error', permissionError);
-            toast({
-              variant: 'destructive',
-              title: '저장 실패',
-              description: '파일 정보를 저장하는 데 실패했습니다. 권한 문제일 수 있습니다.',
-            });
           })
           .finally(() => {
             setUploading(false);
@@ -175,36 +170,60 @@ export default function GalleryPage() {
     );
   };
   
-  const handleEdit = async (values: z.infer<typeof editSchema>) => {
+  const handleEdit = (values: z.infer<typeof editSchema>) => {
     if (!firestore || !editingItem) return;
     
     const itemDoc = doc(firestore, 'gallery', editingItem.id);
-    await updateDoc(itemDoc, { description: values.description });
-    
-    toast({ title: '성공', description: '설명이 수정되었습니다.' });
-    setEditingItem(null);
+    const updatedData = { description: values.description };
+
+    updateDoc(itemDoc, updatedData)
+    .then(() => {
+        toast({ title: '성공', description: '설명이 수정되었습니다.' });
+        setEditingItem(null);
+    })
+    .catch((error) => {
+        const permissionError = new FirestorePermissionError({
+          path: itemDoc.path,
+          operation: 'update',
+          requestResourceData: updatedData
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setEditingItem(null);
+    });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!firestore || !storage || !deletingItem) return;
 
     const itemDoc = doc(firestore, 'gallery', deletingItem.id);
     const itemRef = ref(storage, deletingItem.storagePath);
 
-    try {
-      await deleteObject(itemRef);
-      await deleteDoc(itemDoc);
-      toast({ title: '성공', description: '갤러리에서 삭제되었습니다.' });
-    } catch (error) {
-      console.error('Delete failed:', error);
-      toast({
-        variant: 'destructive',
-        title: '삭제 실패',
-        description: '삭제 중 오류가 발생했습니다.',
+    deleteDoc(itemDoc)
+      .then(() => {
+        return deleteObject(itemRef);
+      })
+      .then(() => {
+        toast({ title: '성공', description: '갤러리에서 삭제되었습니다.' });
+      })
+      .catch((error: any) => {
+        console.error('Delete failed:', error);
+        if (error.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+              path: itemDoc.path,
+              operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        } else {
+            toast({
+                variant: 'destructive',
+                title: '삭제 실패',
+                description: '삭제 중 오류가 발생했습니다. 권한을 확인해주세요.',
+            });
+        }
+      })
+      .finally(() => {
+        setDeletingItem(null);
       });
-    } finally {
-      setDeletingItem(null);
-    }
   };
 
   return (
