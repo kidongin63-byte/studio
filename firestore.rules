@@ -28,8 +28,11 @@ service cloud.firestore {
 
     match /messages/{messageId} {
       allow read: if request.auth != null;
-      // Only admins can create, update, or delete messages.
-      allow write: if isAdmin(request.auth.uid);
+      // Any authenticated user can create a message, but the author name must match their profile.
+      allow create: if request.auth != null &&
+                     request.resource.data.author == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.name;
+      // Only admins can update or delete messages.
+      allow update, delete: if isAdmin(request.auth.uid);
     }
   }
 }

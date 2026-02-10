@@ -8,6 +8,7 @@ const titles: Record<string, string> = {
   '/dashboard/gallery': '추억 갤러리',
   '/dashboard/rules': '우리의 회칙',
   '/dashboard/messages': '영감을 주는 메시지',
+  '/dashboard/messages/new': '새 메시지 작성',
   '/dashboard/ai-summary': 'AI 요약 도구',
   '/dashboard/admin': '관리자 모드',
 };

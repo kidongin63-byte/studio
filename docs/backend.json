@@ -93,6 +93,11 @@
         },
         "content": {
           "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The time the message was created."
         }
       },
       "required": [

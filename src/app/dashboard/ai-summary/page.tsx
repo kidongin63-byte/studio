@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
+import Link from 'next/link';
 import { collection, query, orderBy } from 'firebase/firestore';
 
 import { summarizeInspirationalMessages } from '@/ai/flows/summarize-inspirational-messages';
@@ -117,9 +118,13 @@ export default function AiSummaryPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  <p>요약할 메시지가 없습니다.</p>
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-center">
+                  <MessageSquare className="h-8 w-8 mb-2" />
+                  <p className="font-semibold">요약할 메시지가 없습니다.</p>
+                  <p className="text-sm">먼저 영감을 주는 메시지를 작성해주세요.</p>
+                  <Button asChild variant="secondary" className="mt-4">
+                      <Link href="/dashboard/messages/new">새 메시지 작성하기</Link>
+                  </Button>
                 </div>
               )}
             </ScrollArea>
