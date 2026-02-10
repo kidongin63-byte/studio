@@ -45,7 +45,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
@@ -57,9 +56,10 @@ import {
   Pencil,
   UploadCloud,
 } from 'lucide-react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 const galleryItemSchema = z.object({
   description: z.string().min(1, '설명을 입력해주세요.'),
@@ -196,57 +196,63 @@ export default function GalleryPage() {
             <DialogHeader>
               <DialogTitle>갤러리에 새 항목 추가</DialogTitle>
             </DialogHeader>
-            <form onSubmit={form.handleSubmit(handleUpload)} className="space-y-4">
-              <Controller
-                name="file"
-                control={form.control}
-                render={({ field: { onChange }, fieldState }) => (
-                  <div>
-                    <Label htmlFor="file-upload" className="block text-sm font-medium text-gray-700">파일</Label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
-                      <div className="space-y-1 text-center">
-                        <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-                        <div className="flex text-sm text-gray-600">
-                          <label
-                            htmlFor="file-upload"
-                            className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                          >
-                            <span>파일 업로드</span>
-                            <input id="file-upload" name="file" type="file" className="sr-only" onChange={(e) => onChange(e.target.files)} accept="image/*,video/*" />
-                          </label>
-                          <p className="pl-1">또는 파일을 드래그하세요</p>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleUpload)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="file"
+                  render={({ field: { onChange } }) => (
+                    <FormItem>
+                      <FormLabel>파일</FormLabel>
+                      <FormControl>
+                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
+                          <div className="space-y-1 text-center">
+                            <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                            <div className="flex text-sm text-gray-600">
+                              <label
+                                htmlFor="file-upload"
+                                className="relative cursor-pointer bg-background rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ring"
+                              >
+                                <span>파일 업로드</span>
+                                <input id="file-upload" type="file" className="sr-only" onChange={(e) => onChange(e.target.files)} accept="image/*,video/*" />
+                              </label>
+                              <p className="pl-1">또는 파일을 드래그하세요</p>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              이미지 또는 비디오 파일
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-gray-500">
-                          이미지 또는 비디오 파일
-                        </p>
-                      </div>
-                    </div>
-                    {fieldState.error && <p className="text-sm text-destructive mt-1">{fieldState.error.message}</p>}
-                  </div>
-                )}
-              />
-              <Controller
-                name="description"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                   <div>
-                    <Label htmlFor="description">설명</Label>
-                    <Textarea placeholder="사진 또는 비디오에 대한 설명을 입력하세요." {...field} />
-                    {fieldState.error && <p className="text-sm text-destructive mt-1">{fieldState.error.message}</p>}
-                  </div>
-                )}
-              />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                     <FormItem>
+                      <FormLabel>설명</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="사진 또는 비디오에 대한 설명을 입력하세요." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {uploading && <Progress value={uploadProgress} className="w-full" />}
-              
-              <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="outline">취소</Button></DialogClose>
-                <Button type="submit" disabled={uploading}>
-                  {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImagePlus className="mr-2 h-4 w-4" />}
-                  추가하기
-                </Button>
-              </DialogFooter>
-            </form>
+                {uploading && <Progress value={uploadProgress} className="w-full" />}
+                
+                <DialogFooter>
+                  <DialogClose asChild><Button type="button" variant="outline">취소</Button></DialogClose>
+                  <Button type="submit" disabled={uploading}>
+                    {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ImagePlus className="mr-2 h-4 w-4" />}
+                    추가하기
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -310,23 +316,27 @@ export default function GalleryPage() {
       <Dialog open={!!editingItem} onOpenChange={(open) => !open && setEditingItem(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>설명 수정</DialogTitle></DialogHeader>
-          <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
-             <Controller
-                name="description"
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleEdit)} className="space-y-4">
+              <FormField
                 control={editForm.control}
-                render={({ field, fieldState }) => (
-                   <div>
-                    <Label htmlFor="edit-description">설명</Label>
-                    <Textarea id="edit-description" {...field} />
-                    {fieldState.error && <p className="text-sm text-destructive mt-1">{fieldState.error.message}</p>}
-                  </div>
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>설명</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
               />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditingItem(null)}>취소</Button>
-              <Button type="submit">수정 완료</Button>
-            </DialogFooter>
-          </form>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setEditingItem(null)}>취소</Button>
+                <Button type="submit">수정 완료</Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
