@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "gallery-1",
+      "description": "A beautiful mountain landscape at sunrise.",
+      "imageUrl": "https://images.unsplash.com/photo-1594329852649-012d9528deda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtb3VudGFpbiUyMHN1bnJpc2V8ZW58MHx8fHwxNzcwNTkwNzA1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mountain sunrise"
+    },
+    {
+      "id": "gallery-2",
+      "description": "Group of friends laughing on a beach.",
+      "imageUrl": "https://images.unsplash.com/photo-1525162618450-db04e92d63d6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmcmllbmRzJTIwYmVhY2h8ZW58MHx8fHwxNzcwNjg3NjE1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "friends beach"
+    },
+    {
+      "id": "gallery-3",
+      "description": "A delicious looking shared meal.",
+      "imageUrl": "https://images.unsplash.com/photo-1766065886536-3b73b5c60139?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzaGFyZWQlMjBtZWFsfGVufDB8fHx8MTc3MDY4NzYxNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "shared meal"
+    },
+    {
+      "id": "gallery-4",
+      "description": "City skyline at night.",
+      "imageUrl": "https://images.unsplash.com/photo-1505811210036-052144988918?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjaXR5JTIwbmlnaHR8ZW58MHx8fHwxNzcwNTk5NTU3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "city night"
+    },
+    {
+      "id": "gallery-5",
+      "description": "Hiking through a dense forest.",
+      "imageUrl": "https://images.unsplash.com/photo-1677985572119-c41c11ec0e29?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxmb3Jlc3QlMjBoaWtlfGVufDB8fHx8MTc3MDY4NzYxNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "forest hike"
+    },
+    {
+      "id": "gallery-6",
+      "description": "A cozy campfire scene.",
+      "imageUrl": "https://images.unsplash.com/photo-1655176192779-4d995f2debd7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYW1wZmlyZSUyMG5pZ2h0fGVufDB8fHx8MTc3MDYzMTU2OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "campfire night"
+    },
+    {
+      "id": "gallery-7",
+      "description": "Friends celebrating a birthday.",
+      "imageUrl": "https://images.unsplash.com/photo-1533294160622-d5fece3e080d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YmlydGhkYXklMjBjZWxlYnJhdGlvbnxlbnwwfHx8fDE3NzA2MDA3NzR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "birthday celebration"
+    },
+    {
+      "id": "gallery-8",
+      "description": "A serene lake view.",
+      "imageUrl": "https://images.unsplash.com/photo-1699378281595-0d75e9e6a05a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c2VyZW5lJTIwbGFrZXxlbnwwfHx8fDE3NzA2ODc2MTV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "serene lake"
+    }
+  ]
 }
