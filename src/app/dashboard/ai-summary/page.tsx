@@ -1,9 +1,14 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
+import { collection, query, orderBy } from 'firebase/firestore';
+
 import { summarizeInspirationalMessages } from '@/ai/flows/summarize-inspirational-messages';
+import { useFirestore, useCollection } from '@/firebase';
+import type { Message } from '@/lib/data';
+
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Card,
   CardContent,
@@ -12,7 +17,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Sparkles, Loader2, Lightbulb } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sparkles, Loader2, Lightbulb, MessageSquare } from 'lucide-react';
 
 type SummaryState = {
   summary: string;
@@ -41,10 +47,10 @@ async function runSummary(
   }
 }
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending || disabled}>
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -63,6 +69,14 @@ function SubmitButton() {
 export default function AiSummaryPage() {
   const [state, formAction] = useFormState(runSummary, { summary: '' });
 
+  const firestore = useFirestore();
+  const messagesQuery = useMemo(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'messages'), orderBy('createdAt', 'desc'));
+  }, [firestore]);
+
+  const { data: messages, loading: messagesLoading } = useCollection<Message & { createdAt: any }>(messagesQuery);
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -74,24 +88,44 @@ export default function AiSummaryPage() {
       </div>
 
       <form action={formAction}>
+        {/* Pass messages to server action via hidden input */}
+        <input
+          type="hidden"
+          name="messages"
+          value={messages?.map((m) => m.content).join('\n\n') || ''}
+        />
         <Card>
           <CardHeader>
             <CardTitle>요약할 메시지</CardTitle>
             <CardDescription>
-              아래 텍스트 영역에 요약하고 싶은 메시지를 입력하세요. 각 메시지는
-              빈 줄로 구분해주세요.
+              아래는 데이터베이스에서 가져온 모든 영감을 주는 메시지들입니다.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Textarea
-              name="messages"
-              rows={15}
-              className="font-body"
-              placeholder="여기에 메시지를 입력하세요. 메시지들은 빈 줄로 구분됩니다..."
-            />
+            <ScrollArea className="h-72 w-full rounded-md border p-4">
+              {messagesLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : messages && messages.length > 0 ? (
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div key={message.id} className="text-sm">
+                      <p className="font-medium">{message.content}</p>
+                      <p className="text-xs text-muted-foreground">- {message.author}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <p>요약할 메시지가 없습니다.</p>
+                </div>
+              )}
+            </ScrollArea>
           </CardContent>
           <CardFooter className="flex justify-end">
-            <SubmitButton />
+            <SubmitButton disabled={messagesLoading || !messages || messages.length === 0} />
           </CardFooter>
         </Card>
       </form>
