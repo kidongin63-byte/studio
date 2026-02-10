@@ -155,7 +155,7 @@ export default function GalleryPage() {
             setFileName(null);
             if(fileInputRef.current) fileInputRef.current.value = '';
           })
-          .catch((error) => {
+          .catch(async (error) => {
             const permissionError = new FirestorePermissionError({
                 path: galleryCollection.path,
                 operation: 'create',
@@ -179,15 +179,16 @@ export default function GalleryPage() {
     updateDoc(itemDoc, updatedData)
     .then(() => {
         toast({ title: '성공', description: '설명이 수정되었습니다.' });
-        setEditingItem(null);
     })
-    .catch((error) => {
+    .catch(async (error) => {
         const permissionError = new FirestorePermissionError({
           path: itemDoc.path,
           operation: 'update',
           requestResourceData: updatedData
         });
         errorEmitter.emit('permission-error', permissionError);
+    })
+    .finally(() => {
         setEditingItem(null);
     });
   };
@@ -196,30 +197,26 @@ export default function GalleryPage() {
     if (!firestore || !storage || !deletingItem) return;
 
     const itemDoc = doc(firestore, 'gallery', deletingItem.id);
-    const itemRef = ref(storage, deletingItem.storagePath);
+    const itemStorageRef = ref(storage, deletingItem.storagePath);
 
     deleteDoc(itemDoc)
       .then(() => {
-        return deleteObject(itemRef);
-      })
-      .then(() => {
         toast({ title: '성공', description: '갤러리에서 삭제되었습니다.' });
+        // Attempt to delete from storage, but don't let it block the UI flow.
+        deleteObject(itemStorageRef).catch((storageError) => {
+          toast({
+            variant: "destructive",
+            title: "파일 정리 실패",
+            description: "데이터는 삭제되었지만, 저장소 파일 삭제에 실패했습니다.",
+          });
+        });
       })
-      .catch((error: any) => {
-        console.error('Delete failed:', error);
-        if (error.code === 'permission-denied') {
-            const permissionError = new FirestorePermissionError({
-              path: itemDoc.path,
-              operation: 'delete',
-            });
-            errorEmitter.emit('permission-error', permissionError);
-        } else {
-            toast({
-                variant: 'destructive',
-                title: '삭제 실패',
-                description: '삭제 중 오류가 발생했습니다. 권한을 확인해주세요.',
-            });
-        }
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: itemDoc.path,
+          operation: 'delete',
+        });
+        errorEmitter.emit('permission-error', permissionError);
       })
       .finally(() => {
         setDeletingItem(null);
