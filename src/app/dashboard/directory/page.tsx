@@ -26,9 +26,9 @@ export default function DirectoryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Member Directory</h1>
+        <h1 className="text-3xl font-bold font-headline">회원 명부</h1>
         <p className="text-muted-foreground">
-          Find and connect with fellow members.
+          동료 회원들을 찾아보고 연락하세요.
         </p>
       </div>
 
@@ -36,7 +36,7 @@ export default function DirectoryPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Search by name..."
+          placeholder="이름으로 검색..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full max-w-sm pl-10"
@@ -50,14 +50,14 @@ export default function DirectoryPage() {
               <CardHeader className="flex-row items-center gap-4">
                 <Image
                   src={member.avatarUrl}
-                  alt={`Avatar of ${member.name}`}
+                  alt={`${member.name}의 아바타`}
                   width={64}
                   height={64}
                   className="rounded-full border-2 border-primary/20"
                 />
                 <div>
                   <CardTitle className="font-headline">{member.name}</CardTitle>
-                  <CardDescription>Member</CardDescription>
+                  <CardDescription>회원</CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 flex-grow">
@@ -73,12 +73,12 @@ export default function DirectoryPage() {
               <CardFooter className="flex-col sm:flex-row gap-2">
                  <a href={`tel:${member.phone}`} className="w-full">
                   <Button variant="outline" className="w-full">
-                    <Phone className="mr-2 h-4 w-4" /> Call
+                    <Phone className="mr-2 h-4 w-4" /> 전화
                   </Button>
                 </a>
                 <Link href={`/dashboard/members/${member.id}`} className="w-full">
                   <Button className="w-full">
-                    <User className="mr-2 h-4 w-4" /> Profile
+                    <User className="mr-2 h-4 w-4" /> 프로필
                   </Button>
                 </Link>
               </CardFooter>
@@ -87,7 +87,7 @@ export default function DirectoryPage() {
         </div>
       ) : (
         <div className="text-center py-16 text-muted-foreground">
-          <p>No members found matching your search.</p>
+          <p>검색과 일치하는 회원이 없습니다.</p>
         </div>
       )}
     </div>

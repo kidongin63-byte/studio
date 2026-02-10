@@ -21,7 +21,7 @@ async function runSummary(
 ): Promise<SummaryState> {
   const messagesStr = formData.get("messages") as string;
   if (!messagesStr) {
-    return { summary: "", error: "No messages to summarize." };
+    return { summary: "", error: "요약할 메시지가 없습니다." };
   }
   const messages = messagesStr.split("\n\n").filter(m => m.trim() !== '');
 
@@ -30,7 +30,7 @@ async function runSummary(
     return { summary: result.summary };
   } catch (e) {
     console.error(e);
-    return { summary: "", error: "Failed to generate summary. Please try again." };
+    return { summary: "", error: "요약을 생성하지 못했습니다. 다시 시도해 주세요." };
   }
 }
 
@@ -41,12 +41,12 @@ function SubmitButton() {
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Summarizing...
+          요약 중...
         </>
       ) : (
         <>
           <Sparkles className="mr-2 h-4 w-4" />
-          Generate Summary
+          요약 생성
         </>
       )}
     </Button>
@@ -59,18 +59,18 @@ export default function AiSummaryPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold font-headline">AI Content Summarization</h1>
+        <h1 className="text-3xl font-bold font-headline">AI 콘텐츠 요약</h1>
         <p className="text-muted-foreground">
-          Use AI to find common themes in our inspirational messages for the anthology.
+          AI를 사용하여 영감을 주는 메시지의 공통 주제를 찾아 앤솔로지를 만들어보세요.
         </p>
       </div>
 
       <form action={formAction}>
         <Card>
           <CardHeader>
-            <CardTitle>Messages to Summarize</CardTitle>
+            <CardTitle>요약할 메시지</CardTitle>
             <CardDescription>
-              The inspirational messages from our members are pre-loaded below. You can edit them before generating the summary.
+              회원들의 영감을 주는 메시지가 아래에 미리 로드되어 있습니다. 요약을 생성하기 전에 편집할 수 있습니다.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -79,7 +79,7 @@ export default function AiSummaryPage() {
               defaultValue={initialMessages}
               rows={15}
               className="font-body"
-              placeholder="Enter messages here, separated by double newlines..."
+              placeholder="여기에 메시지를 입력하세요. 메시지들은 빈 줄로 구분됩니다..."
             />
           </CardContent>
           <CardFooter className="flex justify-end">
@@ -91,7 +91,7 @@ export default function AiSummaryPage() {
       {state.error && (
         <Card className="bg-destructive/10 border-destructive">
           <CardHeader>
-            <CardTitle className="text-destructive">An Error Occurred</CardTitle>
+            <CardTitle className="text-destructive">오류가 발생했습니다</CardTitle>
           </CardHeader>
           <CardContent>
             <p>{state.error}</p>
@@ -104,10 +104,10 @@ export default function AiSummaryPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Lightbulb className="text-primary"/>
-              Summary of Themes
+              주제 요약
             </CardTitle>
             <CardDescription>
-              Here are the common themes found by the AI.
+              AI가 찾은 공통 주제는 다음과 같습니다.
             </CardDescription>
           </CardHeader>
           <CardContent>

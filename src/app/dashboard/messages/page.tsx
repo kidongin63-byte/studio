@@ -12,9 +12,9 @@ export default function MessagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Inspirational Messages</h1>
+        <h1 className="text-3xl font-bold font-headline">영감을 주는 메시지</h1>
         <p className="text-muted-foreground">
-          A collection of wisdom and kind words from our members.
+          회원들의 지혜와 따뜻한 말 한마디를 모았습니다.
         </p>
       </div>
 

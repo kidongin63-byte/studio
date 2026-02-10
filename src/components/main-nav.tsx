@@ -23,12 +23,12 @@ import { Logo } from "@/components/icons";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/directory", label: "Directory", icon: Contact },
-  { href: "/dashboard/gallery", label: "Gallery", icon: ImageIcon },
-  { href: "/dashboard/rules", label: "Rules", icon: BookOpenCheck },
-  { href: "/dashboard/messages", label: "Messages", icon: MessagesSquare },
-  { href: "/dashboard/ai-summary", label: "AI Summary", icon: BrainCircuit },
+  { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
+  { href: "/dashboard/directory", label: "회원 명부", icon: Contact },
+  { href: "/dashboard/gallery", label: "갤러리", icon: ImageIcon },
+  { href: "/dashboard/rules", label: "회칙", icon: BookOpenCheck },
+  { href: "/dashboard/messages", label: "메시지", icon: MessagesSquare },
+  { href: "/dashboard/ai-summary", label: "AI 요약", icon: BrainCircuit },
 ];
 
 export function MainNav() {
@@ -41,9 +41,9 @@ export function MainNav() {
           <Logo className="size-8 text-primary" />
           <div className="flex flex-col">
             <h2 className="text-base font-semibold tracking-tighter font-headline">
-              Friendship
+              우정
             </h2>
-            <p className="text-sm text-muted-foreground -mt-1">Chronicle</p>
+            <p className="text-sm text-muted-foreground -mt-1">연대기</p>
           </div>
         </div>
       </SidebarHeader>

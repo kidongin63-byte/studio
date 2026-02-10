@@ -3,19 +3,19 @@ import { usePathname } from 'next/navigation';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 
 const titles: Record<string, string> = {
-  '/dashboard': 'Dashboard',
-  '/dashboard/directory': 'Digital Directory',
-  '/dashboard/gallery': 'Memory Gallery',
-  '/dashboard/rules': 'Our Rules',
-  '/dashboard/messages': 'Inspirational Messages',
-  '/dashboard/ai-summary': 'AI Summary Tool',
+  '/dashboard': '대시보드',
+  '/dashboard/directory': '회원 명부',
+  '/dashboard/gallery': '추억 갤러리',
+  '/dashboard/rules': '우리의 회칙',
+  '/dashboard/messages': '영감을 주는 메시지',
+  '/dashboard/ai-summary': 'AI 요약 도구',
 };
 
 function getTitle(pathname: string): string {
     if (pathname.startsWith('/dashboard/members/')) {
-        return 'Member Profile';
+        return '회원 프로필';
     }
-    return titles[pathname] || 'Friendship Chronicle';
+    return titles[pathname] || '우정 연대기';
 }
 
 

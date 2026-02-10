@@ -9,9 +9,9 @@ export default function GalleryPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Memory Gallery</h1>
+        <h1 className="text-3xl font-bold font-headline">추억 갤러리</h1>
         <p className="text-muted-foreground">
-          A collection of our favorite moments and travel recommendations.
+          우리가 가장 좋아하는 순간과 여행 추천 모음입니다.
         </p>
       </div>
 

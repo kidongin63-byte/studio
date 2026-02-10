@@ -34,7 +34,7 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
       <div className="flex flex-col sm:flex-row items-center gap-6">
         <Image
           src={member.avatarUrl}
-          alt={`Avatar of ${member.name}`}
+          alt={`${member.name}의 아바타`}
           width={128}
           height={128}
           className="rounded-full border-4 border-primary/20 shadow-lg"
@@ -42,27 +42,27 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
         />
         <div>
           <h1 className="text-4xl font-bold font-headline">{member.name}</h1>
-          <p className="text-lg text-muted-foreground">Detailed Member Profile</p>
+          <p className="text-lg text-muted-foreground">상세 회원 프로필</p>
         </div>
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Contact Information</CardTitle>
+            <CardTitle>연락처 정보</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <Phone className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">Phone Number</p>
+                <p className="text-sm font-medium">전화번호</p>
                 <p className="text-base">{member.phone}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Home className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">Address</p>
+                <p className="text-sm font-medium">주소</p>
                 <p className="text-base">{member.address}</p>
               </div>
             </div>
@@ -71,21 +71,21 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
 
         <Card>
           <CardHeader>
-            <CardTitle>Personal Details</CardTitle>
+            <CardTitle>개인 정보</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-3">
               <Cake className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">Birthday</p>
-                <p className="text-base">{new Date(member.birthDate).toLocaleDateString()} {member.isLunar && <Badge variant="outline">Lunar</Badge>}</p>
+                <p className="text-sm font-medium">생일</p>
+                <p className="text-base">{new Date(member.birthDate).toLocaleDateString('ko-KR')} {member.isLunar && <Badge variant="outline">음력</Badge>}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Gift className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium">Wedding Anniversary</p>
-                <p className="text-base">{new Date(member.anniversary).toLocaleDateString()}</p>
+                <p className="text-sm font-medium">결혼기념일</p>
+                <p className="text-base">{new Date(member.anniversary).toLocaleDateString('ko-KR')}</p>
               </div>
             </div>
           </CardContent>
@@ -94,8 +94,8 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
       
       <Card>
           <CardHeader>
-            <CardTitle>Key Anniversary Years</CardTitle>
-            <CardDescription>Automatically calculated milestones for future planning.</CardDescription>
+            <CardTitle>주요 기념일</CardTitle>
+            <CardDescription>미래 계획을 위해 자동으로 계산된 주요 기념일입니다.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {majorBirthdays.map((bday) => (
@@ -109,20 +109,20 @@ export default function MemberProfilePage({ params }: { params: { id: string } }
 
       <Card>
         <CardHeader>
-          <CardTitle>Preferences</CardTitle>
+          <CardTitle>선호사항</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-start gap-3">
             <Utensils className="h-5 w-5 mt-1 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium">Favorite Foods</p>
+              <p className="text-sm font-medium">좋아하는 음식</p>
               <p className="text-base">{member.preferences.food}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Brush className="h-5 w-5 mt-1 text-muted-foreground" />
             <div>
-              <p className="text-sm font-medium">Hobbies</p>
+              <p className="text-sm font-medium">취미</p>
               <p className="text-base">{member.preferences.hobbies}</p>
             </div>
           </div>

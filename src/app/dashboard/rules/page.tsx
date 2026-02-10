@@ -12,7 +12,7 @@ export default function RulesPage() {
       <div>
         <h1 className="text-3xl font-bold text-center font-headline">우리들의 약속 (회칙)</h1>
         <p className="text-muted-foreground text-center mt-2">
-          Our group's principles, accessible anytime, anywhere.
+          언제 어디서나 확인할 수 있는 우리 그룹의 원칙입니다.
         </p>
       </div>
 
