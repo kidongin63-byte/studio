@@ -43,6 +43,8 @@ import {
 import { PlusCircle, Trash, Edit, Loader2 } from 'lucide-react';
 import type { Rule } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const ruleSchema = z.object({
   title: z.string().min(1, '제목을 입력해주세요.'),
@@ -84,24 +86,29 @@ export default function AdminPage() {
       setRules([]);
       setLoading(false);
       return;
-    };
+    }
     setLoading(true);
     const rulesCollection = collection(firestore, 'rules');
-    const unsubscribe = onSnapshot(rulesCollection, (snapshot) => {
-      const rulesData = snapshot.docs.map(
-        (doc) => ({ ...(doc.data() as Rule), firestoreId: doc.id } as RuleWithId)
-      );
-      setRules(rulesData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching rules:", error);
-      toast({
-        variant: "destructive",
-        title: "오류",
-        description: "회칙 목록을 불러오는 데 실패했습니다."
-      });
-      setLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      rulesCollection,
+      (snapshot) => {
+        const rulesData = snapshot.docs.map(
+          (doc) =>
+            ({ ...(doc.data() as Rule), firestoreId: doc.id } as RuleWithId)
+        );
+        setRules(rulesData);
+        setLoading(false);
+      },
+      (error) => {
+        console.error('Error fetching rules:', error);
+        toast({
+          variant: 'destructive',
+          title: '오류',
+          description: '회칙 목록을 불러오는 데 실패했습니다.',
+        });
+        setLoading(false);
+      }
+    );
 
     return () => unsubscribe();
   }, [firestore, toast, isAdmin]);
@@ -120,49 +127,62 @@ export default function AdminPage() {
     }
   }, [editingRule, form]);
 
-  const onSubmit = async (values: z.infer<typeof ruleSchema>) => {
+  const onSubmit = (values: z.infer<typeof ruleSchema>) => {
     if (!firestore || !isAdmin) return;
     const rulesCollection = collection(firestore, 'rules');
 
-    try {
-      if (editingRule) {
-        const ruleDoc = doc(firestore, 'rules', editingRule.firestoreId);
-        await updateDoc(ruleDoc, values);
-        toast({ title: "성공", description: "회칙이 수정되었습니다." });
-        setEditingRule(null);
-      } else {
-        await addDoc(rulesCollection, {
-          ...values,
-          id: `rule-${Date.now()}`,
+    if (editingRule) {
+      const ruleDoc = doc(firestore, 'rules', editingRule.firestoreId);
+      updateDoc(ruleDoc, values)
+        .then(() => {
+          toast({ title: '성공', description: '회칙이 수정되었습니다.' });
+          setEditingRule(null);
+          form.reset();
+        })
+        .catch(() => {
+          const permissionError = new FirestorePermissionError({
+            path: ruleDoc.path,
+            operation: 'update',
+            requestResourceData: values,
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
-        toast({ title: "성공", description: "새 회칙이 추가되었습니다." });
-      }
-      form.reset();
-    } catch (error) {
-      console.error('Error saving rule: ', error);
-      toast({
-        variant: "destructive",
-        title: "오류",
-        description: "회칙을 저장하는 데 실패했습니다."
-      });
+    } else {
+      const newRule = {
+        ...values,
+        id: `rule-${Date.now()}`,
+      };
+      addDoc(rulesCollection, newRule)
+        .then(() => {
+          toast({ title: '성공', description: '새 회칙이 추가되었습니다.' });
+          form.reset();
+        })
+        .catch(() => {
+          const permissionError = new FirestorePermissionError({
+            path: rulesCollection.path,
+            operation: 'create',
+            requestResourceData: newRule,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
     }
   };
 
-  const handleDelete = async (firestoreId: string) => {
+  const handleDelete = (firestoreId: string) => {
     if (!firestore || !isAdmin) return;
     if (window.confirm('정말 이 회칙을 삭제하시겠습니까?')) {
-      try {
-        const ruleDoc = doc(firestore, 'rules', firestoreId);
-        await deleteDoc(ruleDoc);
-        toast({ title: "성공", description: "회칙이 삭제되었습니다." });
-      } catch (error) {
-        console.error('Error deleting rule: ', error);
-        toast({
-          variant: "destructive",
-          title: "오류",
-          description: "회칙을 삭제하는 데 실패했습니다."
+      const ruleDoc = doc(firestore, 'rules', firestoreId);
+      deleteDoc(ruleDoc)
+        .then(() => {
+          toast({ title: '성공', description: '회칙이 삭제되었습니다.' });
+        })
+        .catch(() => {
+          const permissionError = new FirestorePermissionError({
+            path: ruleDoc.path,
+            operation: 'delete',
+          });
+          errorEmitter.emit('permission-error', permissionError);
         });
-      }
     }
   };
 
@@ -208,7 +228,10 @@ export default function AdminPage() {
                   <FormItem>
                     <FormLabel>내용</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="회칙 내용을 입력하세요." {...field} />
+                      <Textarea
+                        placeholder="회칙 내용을 입력하세요."
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
