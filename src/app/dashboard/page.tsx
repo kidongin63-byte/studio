@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useMemo } from 'react';
 import { collection, limit, orderBy, query } from 'firebase/firestore';
 import { useCollection, useFirestore } from '@/firebase';
-import type { Member, Message } from '@/lib/data';
+import type { UserProfile, Message } from '@/lib/data';
 import {
   Card,
   CardContent,
@@ -38,7 +38,7 @@ export default function DashboardPage() {
   }, [firestore]);
 
   const { data: members, loading: membersLoading } =
-    useCollection<Member>(usersCollection);
+    useCollection<UserProfile>(usersCollection);
   const { data: messages, loading: messagesLoading } =
     useCollection<Message>(messagesQuery);
 

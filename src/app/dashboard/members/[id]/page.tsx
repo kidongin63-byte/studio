@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { doc } from 'firebase/firestore';
 
 import { useDoc, useFirestore } from '@/firebase';
-import type { Member } from '@/lib/data';
+import type { UserProfile } from '@/lib/data';
 
 import {
   Card,
@@ -54,7 +54,7 @@ export default function MemberProfilePage({
     return doc(firestore, 'users', params.id);
   }, [firestore, params.id]);
 
-  const { data: member, loading } = useDoc<Member>(memberDoc);
+  const { data: member, loading } = useDoc<UserProfile>(memberDoc);
 
   if (loading) {
     return (

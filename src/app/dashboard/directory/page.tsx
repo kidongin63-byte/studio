@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { collection } from 'firebase/firestore';
 
 import { useCollection, useFirestore } from '@/firebase';
-import type { Member } from '@/lib/data';
+import type { UserProfile } from '@/lib/data';
 import {
   Card,
   CardContent,
@@ -28,7 +28,7 @@ export default function DirectoryPage() {
     return collection(firestore, 'users');
   }, [firestore]);
 
-  const { data: members, loading } = useCollection<Member>(usersCollection);
+  const { data: members, loading } = useCollection<UserProfile>(usersCollection);
 
   const filteredMembers =
     members?.filter((member) =>

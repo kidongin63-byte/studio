@@ -1,5 +1,4 @@
-export type Member = {
-  id: string; // This will be the user's UID from Firebase Auth
+export type UserProfile = {
   name: string;
   phone: string;
   address: string;
@@ -12,6 +11,10 @@ export type Member = {
   };
   avatarUrl: string;
   email: string;
+};
+
+export type Member = UserProfile & {
+  id: string; // This will be the user's UID from Firebase Auth
 };
 
 export type Rule = {
