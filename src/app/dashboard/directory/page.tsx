@@ -28,7 +28,7 @@ export default function DirectoryPage() {
     return collection(firestore, 'users');
   }, [firestore]);
 
-  const { data: members, loading } = useCollection<UserProfile>(usersCollection);
+  const { data: members, loading } = useCollection<UserProfile & { id: string }>(usersCollection);
 
   const filteredMembers =
     members?.filter((member) =>
@@ -65,7 +65,7 @@ export default function DirectoryPage() {
             <Card key={member.id} className="flex flex-col">
               <CardHeader className="flex-row items-center gap-4">
                 <Image
-                  src={member.avatarUrl}
+                  src={member.avatarUrl || `https://picsum.photos/seed/${member.id}/64/64`}
                   alt={`${member.name}의 아바타`}
                   width={64}
                   height={64}

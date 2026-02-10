@@ -74,7 +74,7 @@ export default function MemberProfilePage({
     <div className="mx-auto max-w-4xl space-y-8">
       <div className="flex flex-col items-center gap-6 sm:flex-row">
         <Image
-          src={member.avatarUrl}
+          src={member.avatarUrl || `https://picsum.photos/seed/${member.id}/128/128`}
           alt={`${member.name}의 아바타`}
           width={128}
           height={128}
