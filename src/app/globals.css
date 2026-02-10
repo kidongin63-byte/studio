@@ -4,11 +4,11 @@
 
 @layer base {
   :root {
-    --background: 268 30% 97%;
+    --background: 0 0% 100%;
     --foreground: 278 20% 15%;
-    --card: 268 27% 90%;
+    --card: 268 30% 97%;
     --card-foreground: 278 20% 15%;
-    --popover: 268 27% 90%;
+    --popover: 268 30% 97%;
     --popover-foreground: 278 20% 15%;
     --primary: 278 100% 41%;
     --primary-foreground: 0 0% 98%;
@@ -21,7 +21,7 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 268 27% 85%;
-    --input: 268 27% 87%;
+    --input: 268 27% 90%;
     --ring: 272 76% 53%;
     --radius: 0.5rem;
     --chart-1: 12 76% 61%;

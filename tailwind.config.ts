@@ -10,8 +10,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        body: ['"Noto Sans KR"', 'sans-serif'],
-        headline: ['"Noto Sans KR"', 'sans-serif'],
+        body: ['"Alegreya"', 'serif'],
+        headline: ['"Alegreya"', 'serif'],
         code: ['monospace'],
       },
       colors: {

@@ -13,15 +13,12 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
   CardFooter,
 } from '@/components/ui/card';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -207,7 +204,7 @@ export default function SignupPage() {
                   </FormItem>
                 )}
               />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-end">
                 <FormField
                   control={form.control}
                   name="birthDate"
@@ -225,10 +222,10 @@ export default function SignupPage() {
                   control={form.control}
                   name="isLunar"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 mt-8">
-                      <div className="space-y-0.5">
-                        <FormLabel>음력</FormLabel>
-                      </div>
+                    <FormItem className="flex flex-row items-center gap-2 pb-3">
+                       <FormLabel className="!mt-0">
+                        음력
+                      </FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
