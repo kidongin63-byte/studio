@@ -92,6 +92,7 @@ export default function SignupPage() {
           food: values.foodPreferences || '',
           hobbies: values.hobbies || '',
         },
+        isAdmin: false,
         avatarUrl: `https://picsum.photos/seed/${user.uid}/200/200`,
       };
 

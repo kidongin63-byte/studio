@@ -23,7 +23,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons';
-import { useUser } from '@/firebase';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ const menuItems = [
 
 export function MainNav() {
   const pathname = usePathname();
-  const { user, loading } = useUser();
+  const { user, isAdmin, loading } = useCurrentUser();
   const auth = useAuth();
   const router = useRouter();
 
@@ -66,7 +66,7 @@ export function MainNav() {
       <SidebarContent>
         <SidebarMenu>
           {menuItems.map((item) => {
-            if (item.admin && !user) return null; // Simple admin check
+            if (item.admin && !isAdmin) return null;
             return (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton

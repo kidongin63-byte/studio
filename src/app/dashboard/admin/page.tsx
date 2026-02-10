@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,6 +15,7 @@ import {
 } from 'firebase/firestore';
 
 import { useFirestore } from '@/firebase';
+import { useCurrentUser } from '@/hooks/use-current-user';
 import {
   Card,
   CardContent,
@@ -50,6 +52,8 @@ const ruleSchema = z.object({
 type RuleWithId = Rule & { firestoreId: string };
 
 export default function AdminPage() {
+  const { isAdmin, loading: userLoading } = useCurrentUser();
+  const router = useRouter();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [rules, setRules] = useState<RuleWithId[]>([]);
@@ -65,7 +69,22 @@ export default function AdminPage() {
   });
 
   useEffect(() => {
-    if (!firestore) return;
+    if (!userLoading && !isAdmin) {
+      toast({
+        variant: 'destructive',
+        title: '권한 없음',
+        description: '관리자만 이 페이지에 접근할 수 있습니다.',
+      });
+      router.replace('/dashboard');
+    }
+  }, [isAdmin, userLoading, router, toast]);
+
+  useEffect(() => {
+    if (!firestore || !isAdmin) {
+      setRules([]);
+      setLoading(false);
+      return;
+    };
     setLoading(true);
     const rulesCollection = collection(firestore, 'rules');
     const unsubscribe = onSnapshot(rulesCollection, (snapshot) => {
@@ -85,7 +104,7 @@ export default function AdminPage() {
     });
 
     return () => unsubscribe();
-  }, [firestore, toast]);
+  }, [firestore, toast, isAdmin]);
 
   useEffect(() => {
     if (editingRule) {
@@ -102,7 +121,7 @@ export default function AdminPage() {
   }, [editingRule, form]);
 
   const onSubmit = async (values: z.infer<typeof ruleSchema>) => {
-    if (!firestore) return;
+    if (!firestore || !isAdmin) return;
     const rulesCollection = collection(firestore, 'rules');
 
     try {
@@ -130,7 +149,7 @@ export default function AdminPage() {
   };
 
   const handleDelete = async (firestoreId: string) => {
-    if (!firestore) return;
+    if (!firestore || !isAdmin) return;
     if (window.confirm('정말 이 회칙을 삭제하시겠습니까?')) {
       try {
         const ruleDoc = doc(firestore, 'rules', firestoreId);
@@ -146,6 +165,14 @@ export default function AdminPage() {
       }
     }
   };
+
+  if (userLoading || !isAdmin) {
+    return (
+      <div className="flex h-96 items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

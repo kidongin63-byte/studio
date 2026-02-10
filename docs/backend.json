@@ -49,6 +49,10 @@
         "email": {
           "type": "string",
           "format": "email"
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Whether the user is an administrator."
         }
       },
       "required": [

@@ -1,21 +1,35 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isAdmin(userId) {
+      // Check if the user document has the isAdmin flag set to true.
+      // Use exists() to avoid errors on non-existent documents.
+      return exists(/databases/$(database)/documents/users/$(userId)) &&
+             get(/databases/$(database)/documents/users/$(userId)).data.isAdmin == true;
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth.uid == userId;
+      // New users are not admins by default. Client must set isAdmin to false.
+      allow create: if request.auth.uid == userId && request.resource.data.isAdmin == false;
+      // Users can update their own data, but not their admin status.
+      // Admins can update any user's data, including their admin status.
+      allow update: if (request.auth.uid == userId && request.resource.data.isAdmin == resource.data.isAdmin) || isAdmin(request.auth.uid);
+      // Only admins can delete users.
+      allow delete: if isAdmin(request.auth.uid);
     }
 
     match /rules/{ruleId} {
       allow read: if request.auth != null;
-      // TODO: This should be restricted to admin users.
-      allow write: if request.auth != null;
+      // Only admins can create, update, or delete rules.
+      allow write: if isAdmin(request.auth.uid);
     }
 
     match /messages/{messageId} {
       allow read: if request.auth != null;
-      // TODO: This should be restricted to admin users.
-      allow write: if request.auth != null;
+      // Only admins can create, update, or delete messages.
+      allow write: if isAdmin(request.auth.uid);
     }
   }
 }

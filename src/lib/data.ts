@@ -11,6 +11,7 @@ export type UserProfile = {
   };
   avatarUrl: string;
   email: string;
+  isAdmin?: boolean;
 };
 
 export type Member = UserProfile & {
