@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 
 import {
-  Sidebar,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuItem,
@@ -70,21 +69,21 @@ export function MainNav() {
             if (item.admin && !user) return null; // Simple admin check
             return (
               <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={
-                      pathname.startsWith(item.href) &&
-                      (item.href === '/dashboard'
-                        ? pathname === item.href
-                        : true)
-                    }
-                    tooltip={item.label}
-                  >
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
+                <SidebarMenuButton
+                  asChild
+                  isActive={
+                    pathname.startsWith(item.href) &&
+                    (item.href === '/dashboard'
+                      ? pathname === item.href
+                      : true)
+                  }
+                  tooltip={item.label}
+                >
+                  <Link href={item.href}>
+                    <item.icon />
+                    <span>{item.label}</span>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             );
           })}
