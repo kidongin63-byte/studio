@@ -29,3 +29,14 @@ export type Message = {
   author: string;
   content: string;
 };
+
+export type GalleryItem = {
+  id: string;
+  url: string;
+  storagePath: string;
+  contentType: string;
+  description: string;
+  uploaderId: string;
+  uploaderName: string;
+  createdAt: any; // Firestore timestamp
+};

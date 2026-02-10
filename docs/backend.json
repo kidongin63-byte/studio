@@ -104,6 +104,51 @@
         "author",
         "content"
       ]
+    },
+    "GalleryItem": {
+      "title": "Gallery Item",
+      "description": "An image or video in the gallery.",
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the image or video in Firebase Storage."
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "The path of the file in Firebase Storage."
+        },
+        "contentType": {
+          "type": "string",
+          "description": "The MIME type of the file."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the item."
+        },
+        "uploaderId": {
+          "type": "string",
+          "description": "The UID of the user who uploaded the item."
+        },
+        "uploaderName": {
+          "type": "string",
+          "description": "The name of the user who uploaded the item."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The time the item was created."
+        }
+      },
+      "required": [
+        "url",
+        "storagePath",
+        "contentType",
+        "uploaderId",
+        "uploaderName",
+        "createdAt"
+      ]
     }
   },
   "auth": {
@@ -129,6 +174,12 @@
         "$ref": "#/entities/InspirationalMessage"
       },
       "description": "Stores inspirational messages from members."
+    },
+    "/gallery/{galleryItemId}": {
+      "schema": {
+        "$ref": "#/entities/GalleryItem"
+      },
+      "description": "Stores gallery items (images and videos)."
     }
   }
 }

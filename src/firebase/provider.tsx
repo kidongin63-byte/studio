@@ -4,12 +4,14 @@ import React, { createContext, useContext } from 'react';
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
+import type { FirebaseStorage } from 'firebase/storage';
 import { initializeFirebase } from './index';
 
 type FirebaseContextValue = {
   firebaseApp: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
+  storage: FirebaseStorage;
 };
 
 const FirebaseContext = createContext<FirebaseContextValue | null>(null);
@@ -51,6 +53,15 @@ export const useFirestore = () => {
   }
   return context.firestore;
 };
+
+export const useStorage = () => {
+  const context = useContext(FirebaseContext);
+  if (!context) {
+    return null;
+  }
+  return context.storage;
+};
+
 
 // General hook to get all services
 export const useFirebase = () => {
