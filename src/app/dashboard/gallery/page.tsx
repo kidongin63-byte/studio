@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import {
   collection,
@@ -55,11 +55,14 @@ import {
   Trash2,
   Pencil,
   UploadCloud,
+  File,
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const galleryItemSchema = z.object({
   description: z.string().min(1, '설명을 입력해주세요.'),
@@ -83,6 +86,9 @@ export default function GalleryPage() {
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
   const [deletingItem, setDeletingItem] = useState<GalleryItem | null>(null);
 
+  const [fileName, setFileName] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const galleryQuery = useMemo(() => {
     if (!firestore) return null;
     return query(collection(firestore, 'gallery'), orderBy('createdAt', 'desc'));
@@ -99,10 +105,13 @@ export default function GalleryPage() {
     resolver: zodResolver(editSchema),
   });
 
-  const handleUpload = async (values: z.infer<typeof galleryItemSchema>) => {
+  const handleUpload = (values: z.infer<typeof galleryItemSchema>) => {
     if (!storage || !firestore || !user || !profile) return;
-    const file = values.file[0];
-    if (!file) return;
+    const file = values.file?.[0];
+    if (!file) {
+      toast({ variant: 'destructive', title: '파일 없음', description: '업로드할 파일을 선택해주세요.' });
+      return;
+    }
 
     setUploading(true);
     setUploadProgress(0);
@@ -127,7 +136,8 @@ export default function GalleryPage() {
       },
       async () => {
         const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-        await addDoc(collection(firestore, 'gallery'), {
+        const galleryCollection = collection(firestore, 'gallery');
+        const newGalleryItemData = {
           url: downloadURL,
           storagePath: uploadTask.snapshot.ref.fullPath,
           contentType: file.type,
@@ -135,12 +145,32 @@ export default function GalleryPage() {
           uploaderId: user.uid,
           uploaderName: profile.name,
           createdAt: serverTimestamp(),
-        });
+        };
 
-        toast({ title: '성공', description: '갤러리에 추가되었습니다.' });
-        setUploading(false);
-        setUploadDialogOpen(false);
-        form.reset();
+        addDoc(galleryCollection, newGalleryItemData)
+          .then(() => {
+            toast({ title: '성공', description: '갤러리에 추가되었습니다.' });
+            setUploadDialogOpen(false);
+            form.reset();
+            setFileName(null);
+            if(fileInputRef.current) fileInputRef.current.value = '';
+          })
+          .catch(() => {
+            const permissionError = new FirestorePermissionError({
+                path: galleryCollection.path,
+                operation: 'create',
+                requestResourceData: newGalleryItemData,
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            toast({
+              variant: 'destructive',
+              title: '저장 실패',
+              description: '파일 정보를 저장하는 데 실패했습니다. 권한 문제일 수 있습니다.',
+            });
+          })
+          .finally(() => {
+            setUploading(false);
+          });
       }
     );
   };
@@ -205,22 +235,45 @@ export default function GalleryPage() {
                     <FormItem>
                       <FormLabel>파일</FormLabel>
                       <FormControl>
-                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
+                        <div className="mt-1 flex flex-col items-center justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
                           <div className="space-y-1 text-center">
-                            <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
-                            <div className="flex text-sm text-gray-600">
-                              <label
-                                htmlFor="file-upload"
-                                className="relative cursor-pointer bg-background rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ring"
-                              >
-                                <span>파일 업로드</span>
-                                <input id="file-upload" type="file" className="sr-only" onChange={(e) => onChange(e.target.files)} accept="image/*,video/*" />
-                              </label>
-                              <p className="pl-1">또는 파일을 드래그하세요</p>
-                            </div>
-                            <p className="text-xs text-gray-500">
-                              이미지 또는 비디오 파일
-                            </p>
+                            {fileName ? (
+                              <>
+                                <File className="mx-auto h-12 w-12 text-gray-400" />
+                                <p className="font-medium text-foreground">{fileName}</p>
+                                <label htmlFor="file-upload" className="cursor-pointer text-sm font-medium text-primary hover:text-primary/80">
+                                  다른 파일 선택
+                                </label>
+                              </>
+                            ) : (
+                              <>
+                                <UploadCloud className="mx-auto h-12 w-12 text-gray-400" />
+                                <div className="flex text-sm text-gray-600">
+                                  <label
+                                    htmlFor="file-upload"
+                                    className="relative cursor-pointer bg-background rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ring"
+                                  >
+                                    <span>파일 업로드</span>
+                                  </label>
+                                  <p className="pl-1">또는 파일을 드래그하세요</p>
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                  이미지 또는 비디오 파일
+                                </p>
+                              </>
+                            )}
+                            <input
+                              id="file-upload"
+                              ref={fileInputRef}
+                              type="file"
+                              className="sr-only"
+                              onChange={(e) => {
+                                const files = e.target.files;
+                                onChange(files);
+                                setFileName(files?.[0]?.name || null);
+                              }}
+                              accept="image/*,video/*"
+                            />
                           </div>
                         </div>
                       </FormControl>
