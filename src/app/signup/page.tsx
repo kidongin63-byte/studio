@@ -104,11 +104,29 @@ export default function SignupPage() {
       });
       router.push('/login');
     } catch (error: any) {
-      console.error(error);
-      const message =
-        error.code === 'auth/email-already-in-use'
-          ? '이미 사용중인 이메일입니다.'
-          : '입력 내용을 다시 확인해주세요.';
+      console.error('Signup Error:', error);
+
+      let message = '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          message = '이미 사용 중인 이메일 주소입니다.';
+          break;
+        case 'auth/invalid-email':
+          message = '유효하지 않은 이메일 주소 형식입니다.';
+          break;
+        case 'auth/weak-password':
+          message = '비밀번호는 6자 이상이어야 합니다.';
+          break;
+        case 'auth/operation-not-allowed':
+          message = '이메일/비밀번호 로그인이 활성화되지 않았습니다. Firebase 콘솔 설정을 확인하세요.';
+          break;
+        case 'auth/api-key-not-valid':
+          message = 'Firebase API 키가 유효하지 않습니다. .env 파일을 확인하세요.';
+          break;
+        default:
+          message = '회원가입에 실패했습니다. 입력 내용을 다시 확인해주세요.';
+      }
+
       toast({
         variant: 'destructive',
         title: '회원가입 실패',
