@@ -8,10 +8,32 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import {
     Mic, Send, Keyboard, Heart, Sparkles, MessageCircle, Pencil,
-    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight, ChevronLeft, Zap, SlidersHorizontal
+    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight, ChevronLeft, Zap, SlidersHorizontal, Calendar, Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import YouTube from "react-youtube";
+import { saveSchedule, db } from "@/lib/firebase";
+import { Solar, Lunar } from "lunar-javascript";
+import {
+    format,
+    addMonths,
+    subMonths,
+    startOfMonth,
+    endOfMonth,
+    startOfWeek,
+    endOfWeek,
+    eachDayOfInterval,
+    isSameMonth,
+    isSameDay,
+    addYears,
+    subYears,
+    getYear,
+    getMonth,
+    addDays,
+    subDays
+} from "date-fns";
+import { ko } from "date-fns/locale";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 interface Message {
     role: "user" | "ai";
@@ -24,9 +46,14 @@ interface Message {
         mapEmbedUrl?: string;
         category?: string;
     };
+    scheduleData?: {
+        title: string;
+        date: string;
+        time: string;
+    };
 }
 
-const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo") => void, setInput: (val: string) => void, input: string }) => (
+const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void, setInput: (val: string) => void, input: string }) => (
     <div className="flex flex-col h-full bg-white animate-in slide-in-from-bottom-20 duration-500">
         <header className="p-4 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
             <Button
@@ -78,10 +105,18 @@ const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashb
     </div>
 );
 
-const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOpen }: { setHomeView: (view: "dashboard" | "chat" | "memo") => void, setActiveTab: (tab: string) => void, toggleVoice: () => void, setIsSettingsOpen: (open: boolean) => void }) => (
-    <div className="flex flex-col h-full bg-[#FAFAFA] text-slate-800 animate-in fade-in duration-500">
-        <header className="p-6 flex justify-center items-center bg-transparent shrink-0">
+const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOpen }: { setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void, setActiveTab: (tab: string) => void, toggleVoice: () => void, setIsSettingsOpen: (open: boolean) => void }) => (
+    <div className="flex flex-col h-full bg-transparent text-slate-800 animate-in fade-in duration-500">
+        <header className="p-6 flex justify-between items-center bg-transparent shrink-0">
+            <div className="w-10" />
             <div className="text-slate-400 font-bold text-lg">곁이 함께하고 있어요</div>
+            <Button
+                onClick={() => setIsSettingsOpen(true)}
+                variant="ghost"
+                className="w-10 h-10 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-all p-0"
+            >
+                <Settings className="w-6 h-6" />
+            </Button>
         </header>
 
         <div className="flex-1 flex flex-col items-center justify-start pt-4 px-8 text-center overflow-y-auto hide-scrollbar">
@@ -101,11 +136,11 @@ const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOp
                 </div>
             </div>
 
-            <div className="space-y-4 mb-8">
+            <div className="space-y-4 mb-8 bg-white/40 backdrop-blur-md border border-white/60 p-6 rounded-[32px] shadow-sm max-w-[320px] mx-auto">
                 <h2 className="text-[28px] md:text-[32px] font-black leading-tight tracking-tight">
                     지금 상태가<br />평소와 조금 다른 것 같아요
                 </h2>
-                <p className="text-[17px] text-slate-400 font-medium leading-relaxed">
+                <p className="text-[17px] text-slate-500 font-medium leading-relaxed">
                     잠시 호흡을 가다듬고<br />
                     상태를 확인해보는 건 어떨까요?
                 </p>
@@ -120,61 +155,68 @@ const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOp
         </div>
 
         <div className="dashboard-card bg-white p-10 pb-14 shadow-[0_-15px_40px_rgba(0,0,0,0.04)] animate-in slide-in-from-bottom-12 duration-700 shrink-0">
-            <div className="max-w-[340px] mx-auto w-full space-y-12">
+            <div className="max-w-[340px] mx-auto w-full space-y-10">
                 <Button
                     onClick={() => setHomeView("chat")}
-                    className="w-full h-20 rounded-[32px] bg-brand-purple hover:bg-brand-purple/95 text-white text-3xl font-black flex items-center justify-center gap-5 shadow-[0_12px_24px_rgba(161,99,241,0.25)] transition-all hover:scale-[1.02] active:scale-95"
+                    className="w-full h-18 rounded-[28px] bg-brand-purple hover:bg-brand-purple/95 text-white text-[28px] font-black flex items-center justify-center gap-4 shadow-[0_12px_24px_rgba(161,99,241,0.25)] transition-all hover:scale-[1.02] active:scale-95"
                 >
-                    <MessageCircle className="w-8 h-8 fill-white/20" />
+                    <MessageCircle className="w-7 h-7 fill-white/20" />
                     대화하기
                 </Button>
 
-                <div className="grid grid-cols-2 gap-7">
+                <div className="grid grid-cols-2 gap-6">
                     <Button
                         variant="secondary"
                         onClick={toggleVoice}
-                        className="h-18 rounded-[28px] bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-black text-xl border border-blue-100/50 flex items-center gap-2 shadow-sm transition-all active:scale-95"
+                        className="h-16 rounded-[24px] bg-blue-100/80 hover:bg-blue-200 text-blue-700 font-black text-[19px] border border-blue-200/50 flex items-center gap-2 shadow-sm transition-all active:scale-95"
                     >
-                        <Mic className="w-6 h-6 text-blue-500" />
+                        <Mic className="w-5 h-5 text-blue-600" />
                         음성/말하기
                     </Button>
                     <Button
                         variant="secondary"
                         onClick={() => setActiveTab("report")}
-                        className="h-18 rounded-[28px] bg-emerald-50/70 hover:bg-emerald-100 text-emerald-700 font-black text-xl border border-emerald-100/50 flex items-center gap-2 shadow-sm transition-all active:scale-95"
+                        className="h-16 rounded-[24px] bg-emerald-100/80 hover:bg-emerald-200 text-emerald-700 font-black text-[19px] border border-emerald-200/50 flex items-center gap-2 shadow-sm transition-all active:scale-95"
                     >
-                        <BarChart3 className="w-6 h-6 text-emerald-500" />
+                        <BarChart3 className="w-5 h-5 text-emerald-600" />
                         리포트
                     </Button>
                 </div>
 
-                <button
-                    onClick={() => setHomeView("memo")}
-                    className="w-full relative group transition-all active:scale-[0.98]"
-                >
-                    <div className="absolute inset-0 bg-brand-purple/5 blur-xl group-hover:bg-brand-purple/10 transition-all rounded-[32px]" />
-                    <div className="relative flex items-center justify-between bg-slate-50/80 p-5 rounded-[32px] border-2 border-dashed border-slate-200/80 group-hover:border-brand-purple/40 group-hover:bg-white transition-all shadow-inner">
-                        <span className="text-xl font-bold text-slate-400 ml-2">글쓰기 메모 남기기...</span>
-                        <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400">
-                            <Pencil className="w-6 h-6" />
+                <div className="flex gap-4">
+                    <Button
+                        onClick={() => setHomeView("memo")}
+                        className="flex-1 h-28 rounded-[28px] bg-white border border-slate-100 flex flex-col items-center justify-center gap-3 shadow-md shadow-slate-200/40 hover:border-brand-purple/30 hover:bg-brand-purple/5 transition-all group"
+                    >
+                        <div className="w-10 h-10 bg-brand-purple/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <Pencil className="w-5 h-5 text-brand-purple" />
                         </div>
-                    </div>
-                </button>
+                        <span className="text-lg font-black text-slate-700">메모 작성</span>
+                    </Button>
 
-                <div className="pt-2 flex items-center gap-3">
+                    <Button
+                        onClick={() => setHomeView("calendar")}
+                        className="flex-1 h-28 rounded-[28px] bg-white border border-slate-100 flex flex-col items-center justify-center gap-3 shadow-md shadow-slate-200/40 hover:border-brand-purple/30 hover:bg-brand-purple/5 transition-all group relative overflow-hidden"
+                    >
+                        <div className="absolute top-0 right-0 w-10 h-10 bg-emerald-500/5 rounded-bl-3xl -mr-3 -mt-3 transition-transform group-hover:scale-150" />
+
+                        <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm border border-emerald-100/50">
+                            <div className="relative">
+                                <Calendar className="w-7 h-7 text-emerald-600" />
+                                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-bounce" />
+                            </div>
+                        </div>
+                        <span className="text-lg font-black text-slate-700">달력 보기</span>
+                    </Button>
+                </div>
+
+                <div className="pt-2">
                     <Button
                         onClick={() => setActiveTab("emergency")}
-                        className="flex-1 h-18 rounded-full bg-[#FFF5F5] hover:bg-red-100/50 text-[#FF4D4D] text-2xl font-black flex items-center justify-center gap-4 border border-red-100/30 shadow-sm transition-all active:scale-95"
+                        className="w-full h-20 rounded-[28px] bg-[#FF4D4D] hover:bg-[#FF3333] text-white text-[24px] font-black flex items-center justify-center gap-4 border border-red-500 shadow-[0_12px_24px_rgba(255,77,77,0.3)] transition-all hover:scale-[1.02] active:scale-95"
                     >
-                        <Sparkles className="w-7 h-7 fill-[#FF4D4D]/10" />
+                        <AlertCircle className="w-8 h-8 fill-white/20" />
                         긴급호출
-                    </Button>
-                    <Button
-                        onClick={() => setIsSettingsOpen(true)}
-                        variant="secondary"
-                        className="w-18 h-18 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-400 border border-slate-100 flex items-center justify-center transition-all active:scale-95"
-                    >
-                        <Settings className="w-8 h-8" />
                     </Button>
                 </div>
             </div>
@@ -182,7 +224,7 @@ const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOp
     </div>
 );
 
-const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, setHomeView, isListening, isLoading, scrollRef, userName }: { messages: Message[], input: string, setInput: (val: string) => void, handleSendMessage: (text?: string) => void, toggleVoice: () => void, setHomeView: (view: "dashboard" | "chat" | "memo") => void, isListening: boolean, isLoading: boolean, scrollRef: React.RefObject<HTMLDivElement | null>, userName: string }) => (
+const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, setHomeView, isListening, isLoading, scrollRef, userName }: { messages: Message[], input: string, setInput: (val: string) => void, handleSendMessage: (text?: string) => void, toggleVoice: () => void, setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void, isListening: boolean, isLoading: boolean, scrollRef: React.RefObject<HTMLDivElement | null>, userName: string }) => (
     <div className="flex flex-col h-full bg-[#FDFCF8] animate-in slide-in-from-right-10 duration-500">
         <header className="p-4 flex justify-between items-center bg-white/60 backdrop-blur-md z-10 border-b border-slate-100">
             <Button
@@ -294,6 +336,44 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                         </Button>
                                     </div>
                                 )}
+                                {msg.scheduleData && (
+                                    <div className="mt-3 p-5 bg-white rounded-2xl border-2 border-brand-purple/20 flex flex-col gap-3 shadow-md animate-in zoom-in-95 duration-300">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-brand-purple/10 rounded-2xl flex items-center justify-center text-brand-purple shrink-0">
+                                                <Calendar className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[12px] font-black text-brand-purple uppercase tracking-tight">반디 일정 비서</p>
+                                                <p className="font-black text-slate-800 text-lg leading-tight">{msg.scheduleData.title}</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-4 h-4 text-slate-400" />
+                                                <p className="text-sm text-slate-600 font-bold">{msg.scheduleData.date || "날짜 미상"}</p>
+                                            </div>
+                                            {msg.scheduleData.time && (
+                                                <div className="flex items-center gap-2">
+                                                    <Clock className="w-4 h-4 text-slate-400" />
+                                                    <p className="text-sm text-slate-600 font-bold">{msg.scheduleData.time}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                className="flex-1 h-11 rounded-xl bg-brand-purple text-white font-black text-sm shadow-sm"
+                                                onClick={async () => {
+                                                    if (msg.scheduleData) {
+                                                        await saveSchedule("kim-grandma-01", msg.scheduleData);
+                                                        alert("일정이 저장되었습니다! 당일에 반디가 잊지 않고 알려드릴게요. ✨");
+                                                    }
+                                                }}
+                                            >
+                                                저장하기
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -355,6 +435,192 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
 );
 
 
+const CalendarView = ({ setHomeView }: { setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void }) => {
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [viewMode, setViewMode] = useState<"month" | "year" | "day">("month");
+    const [schedules, setSchedules] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Firebase에서 일정 가져오기
+        const q = query(collection(db, "schedules"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setSchedules(data);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart);
+    const endDate = endOfWeek(monthEnd);
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+
+    const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
+    const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+    const nextYear = () => setCurrentDate(addYears(currentDate, 1));
+    const prevYear = () => setCurrentDate(subYears(currentDate, 1));
+
+    const getLunarInfo = (date: Date) => {
+        // @ts-ignore
+        const solar = Solar.fromYmd(date.getFullYear(), date.getMonth() + 1, date.getDate());
+        const lunar = solar.getLunar();
+        const nextLunar = solar.next(1).getLunar();
+
+        const isFirstDay = lunar.getDay() === 1;
+        const is15thDay = lunar.getDay() === 15;
+        const isLastDay = nextLunar.getDay() === 1;
+
+        let lunarDateStr = "";
+        if (isFirstDay || is15thDay || isLastDay) {
+            // "음) M.dd" 형식
+            lunarDateStr = `${lunar.getMonth()}.${lunar.getDay() < 10 ? '0' + lunar.getDay() : lunar.getDay()}`;
+        } else {
+            // "음) dd일" 형식
+            lunarDateStr = `${lunar.getDay()}일`;
+        }
+
+        const jieQi = lunar.getJieQi(); // 절기
+        const festivals = lunar.getFestivals(); // 공휴일/명절
+
+        return {
+            lunarDay: `음) ${lunarDateStr}`,
+            jieQi: jieQi || null,
+            isFestival: festivals.length > 0
+        };
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-white animate-in slide-in-from-right-10 duration-500 overflow-hidden">
+            <header className="p-4 flex justify-between items-center bg-white border-b border-slate-100 shrink-0">
+                <Button
+                    variant="ghost"
+                    className="flex items-center gap-1 px-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-xl"
+                    onClick={() => setHomeView("dashboard")}
+                >
+                    <ChevronLeft className="w-6 h-6" />
+                    <span className="font-bold text-lg">이전</span>
+                </Button>
+                <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-2">
+                        <button onClick={prevYear} className="p-1 text-slate-300 hover:text-brand-purple"><ChevronLeft className="w-4 h-4" /></button>
+                        <span className="text-slate-800 font-black text-xl">{format(currentDate, "yyyy년", { locale: ko })}</span>
+                        <button onClick={nextYear} className="p-1 text-slate-300 hover:text-brand-purple"><ChevronRight className="w-4 h-4" /></button>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button onClick={prevMonth} className="p-1 text-slate-300 hover:text-brand-purple"><ChevronLeft className="w-6 h-6" /></button>
+                        <span className="text-brand-purple font-black text-2xl">{format(currentDate, "M월", { locale: ko })}</span>
+                        <button onClick={nextMonth} className="p-1 text-slate-300 hover:text-brand-purple"><ChevronRight className="w-6 h-6" /></button>
+                    </div>
+                </div>
+                <div className="w-10" /> {/* Balance */}
+            </header>
+
+            <div className="flex-1 overflow-y-auto p-4 bg-slate-50/30">
+                <div className="grid grid-cols-7 mb-2">
+                    {["일", "월", "화", "수", "목", "금", "토"].map((d, i) => (
+                        <div key={d} className={cn(
+                            "text-center font-black text-sm pb-2",
+                            i === 0 ? "text-red-500" : i === 6 ? "text-blue-500" : "text-slate-400"
+                        )}>{d}</div>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                    {days.map((day, i) => {
+                        const { lunarDay, jieQi, isFestival } = getLunarInfo(day);
+                        const isCurrentMonth = isSameMonth(day, monthStart);
+                        const isToday = isSameDay(day, new Date());
+                        const daySchedules = schedules.filter(s => s.date === format(day, "yyyy-MM-dd"));
+
+                        return (
+                            <div
+                                key={day.toString()}
+                                className={cn(
+                                    "min-h-[100px] bg-white p-2 flex flex-col gap-1 transition-colors hover:bg-slate-50 cursor-pointer",
+                                    !isCurrentMonth && "bg-slate-50/50 opacity-40"
+                                )}
+                            >
+                                <div className="flex justify-between items-start">
+                                    <span className={cn(
+                                        "text-lg font-black",
+                                        isToday && "w-8 h-8 rounded-full bg-brand-purple text-white flex items-center justify-center -m-1",
+                                        !isToday && (
+                                            (i % 7 === 0 || isFestival) ? "text-red-500" :
+                                                (i % 7 === 6) ? "text-blue-500" :
+                                                    "text-slate-700"
+                                        )
+                                    )}>
+                                        {format(day, "d")}
+                                    </span>
+                                    {jieQi && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1 rounded">{jieQi}</span>}
+                                </div>
+                                <div className={cn(
+                                    "text-[10px] font-medium",
+                                    (i % 7 === 0 || isFestival) ? "text-red-400" :
+                                        (i % 7 === 6) ? "text-blue-400" :
+                                            "text-slate-400"
+                                )}>{lunarDay}</div>
+
+                                <div className="flex flex-col gap-0.5 mt-1 overflow-hidden">
+                                    {daySchedules.map((s, idx) => (
+                                        <div key={idx} className="text-[10px] bg-brand-purple/10 text-brand-purple px-1 py-0.5 rounded truncate font-bold">
+                                            {s.title} {s.time && `(${s.time})`}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="mt-8 pb-10">
+                    <h3 className="text-xl font-black text-slate-800 mb-4 flex items-center gap-2">
+                        <Zap className="w-5 h-5 text-brand-purple" />
+                        이번 달 주요 일정
+                    </h3>
+                    <div className="space-y-3">
+                        {schedules
+                            .filter(s => isSameMonth(new Date(s.date), currentDate))
+                            .sort((a, b) => a.date.localeCompare(b.date))
+                            .map((s, idx) => (
+                                <div key={idx} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex flex-col items-center justify-center shrink-0">
+                                        <span className="text-[10px] font-bold text-slate-400">{format(new Date(s.date), "M월")}</span>
+                                        <span className="text-lg font-black text-brand-purple">{format(new Date(s.date), "d")}</span>
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="text-lg font-black text-slate-800">
+                                            {s.title} {s.time && `(${s.time})`}
+                                        </div>
+                                        <div className="text-sm font-bold text-slate-400 flex items-center gap-1">
+                                            <Clock className="w-3 h-3" />
+                                            {s.time}
+                                        </div>
+                                    </div>
+                                    <div className={cn(
+                                        "px-3 py-1 rounded-full text-[12px] font-bold",
+                                        s.status === "completed" ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600"
+                                    )}>
+                                        {s.status === "completed" ? "완료" : "예정"}
+                                    </div>
+                                </div>
+                            ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="p-4 bg-white border-t border-slate-100 shrink-0 flex gap-3">
+                <Button className="flex-1 h-14 rounded-2xl bg-brand-purple text-white text-lg font-black shadow-lg shadow-brand-purple/20">
+                    <Pencil className="w-5 h-5 mr-2" />
+                    새 일정 직접 적기
+                </Button>
+            </div>
+        </div>
+    );
+};
+
+
 export default function HomePage() {
     const [userName, setUserName] = useState("바다");
     const [messages, setMessages] = useState<Message[]>([
@@ -365,7 +631,7 @@ export default function HomePage() {
     const [showKeyboard, setShowKeyboard] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState("home");
-    const [homeView, setHomeView] = useState<"dashboard" | "chat" | "memo">("dashboard");
+    const [homeView, setHomeView] = useState<"dashboard" | "chat" | "memo" | "calendar">("dashboard");
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [selectedFont, setSelectedFont] = useState("font-nanum-gothic");
     const [selectedVoice, setSelectedVoice] = useState<number>(0);
@@ -530,6 +796,18 @@ export default function HomePage() {
                     console.error("Place Search Error:", placeError);
                 }
             }
+
+            // 일정 추가 신호가 있으면 말풍선에 데이터 추가
+            if (data.scheduleData) {
+                setMessages(prev => {
+                    const newMessages = [...prev];
+                    newMessages[newMessages.length - 1] = {
+                        ...newMessages[newMessages.length - 1],
+                        scheduleData: data.scheduleData
+                    };
+                    return newMessages;
+                });
+            }
         } catch (error) {
             const errorMsg = `아이구 ${userName}님, 잠시 반디가 졸았나봐요. 다시 말씀해 주시겠어요?`;
             setMessages(prev => [...prev, { role: "ai", content: errorMsg }]);
@@ -563,7 +841,7 @@ export default function HomePage() {
 
 
     return (
-        <div className={cn("flex flex-col h-[100dvh] bg-white relative overflow-hidden transition-all duration-500", selectedFont)}>
+        <div className={cn("flex flex-col h-[100dvh] bg-transparent relative overflow-hidden transition-all duration-500", selectedFont)}>
             <div className="flex-1 overflow-hidden relative">
                 {activeTab === "home" && (
                     homeView === "dashboard" ? <DashboardView
@@ -584,11 +862,14 @@ export default function HomePage() {
                             scrollRef={scrollRef}
                             userName={userName}
                         /> :
-                            <MemoView
+                            homeView === "calendar" ? <CalendarView
                                 setHomeView={setHomeView}
-                                setInput={setInput}
-                                input={input}
-                            />
+                            /> :
+                                <MemoView
+                                    setHomeView={setHomeView}
+                                    setInput={setInput}
+                                    input={input}
+                                />
                 )}
 
                 {activeTab === "report" && (

@@ -19,7 +19,11 @@ export async function GET(req: Request) {
             {
                 id: "place-01",
                 name: `${query.replace("추천", "").trim()}`,
-                address: query.includes("서울") ? `서울특별시 종로구 ${query.split(' ')[0]}길 42` : `인천광역시 남동구 ${query.split(' ')[0]}로 77`,
+                address: query.includes("서울") ? `서울특별시 종로구 ${query.split(' ')[0]}길 42` :
+                    query.includes("강원") ? `강원특별자치도 강릉시 해안로 123` :
+                        query.includes("인천") ? `인천광역시 남동구 문화로 77` :
+                            query.includes("부산") ? `부산광역시 해운대구 해변로 55` :
+                                `바다님 근처 ${query.split(' ')[0]} 관련 장소`,
                 mapUrl: `https://www.google.com/maps/search/${encodeURIComponent(query)}`,
                 mapEmbedUrl: `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`,
                 category: query.includes("명소") || query.includes("여행") ? "추천" : "장소"

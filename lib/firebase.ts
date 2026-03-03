@@ -117,3 +117,20 @@ export const sendPushNotification = async (target: string, title: string, body: 
     // 실제 FCM 구현 시 이곳에 로직 추가
     return { success: true, messageId: "simulated-id" };
 };
+
+/**
+ * 5단계: 일정 저장 (schedules 컬렉션)
+ * AI가 추출한 일정을 저장합니다.
+ */
+export const saveSchedule = async (userId: string, schedule: { title: string, date: string, time: string }) => {
+    try {
+        return await addDoc(collection(db, "schedules"), {
+            userId,
+            ...schedule,
+            status: "pending", // 알림 대기 중
+            createdAt: serverTimestamp(),
+        });
+    } catch (e) {
+        console.error("Firebase Error (saveSchedule):", e);
+    }
+};
