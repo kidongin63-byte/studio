@@ -65,6 +65,7 @@ declare global {
 
 const KakaoMap = ({ lat, lng }: { lat?: string, lng?: string }) => {
     const mapRef = useRef<HTMLDivElement>(null);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
         if (!lat || !lng || !mapRef.current) return;
@@ -73,21 +74,21 @@ const KakaoMap = ({ lat, lng }: { lat?: string, lng?: string }) => {
             window.kakao.maps.load(() => {
                 if (!mapRef.current) return;
                 const options = {
-                    center: new window.kakao.maps.LatLng(lat, lng),
+                    center: new window.kakao.maps.LatLng(Number(lat), Number(lng)),
                     level: 3
                 };
                 const map = new window.kakao.maps.Map(mapRef.current, options);
-                const markerPosition = new window.kakao.maps.LatLng(lat, lng);
+                const markerPosition = new window.kakao.maps.LatLng(Number(lat), Number(lng));
                 const marker = new window.kakao.maps.Marker({
                     position: markerPosition
                 });
                 marker.setMap(map);
+                setIsLoaded(true);
             });
         };
 
-        // 카카오 객체가 로드될 때까지 잠시 기다렸다가 초기화
         const checkKakao = setInterval(() => {
-            if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
+            if (window.kakao && window.kakao.maps && window.kakao.maps.load) {
                 initMap();
                 clearInterval(checkKakao);
             }
@@ -96,7 +97,16 @@ const KakaoMap = ({ lat, lng }: { lat?: string, lng?: string }) => {
         return () => clearInterval(checkKakao);
     }, [lat, lng]);
 
-    return <div ref={mapRef} className="w-full h-full min-h-[180px] bg-slate-100" />;
+    return (
+        <div ref={mapRef} className="w-full h-full min-h-[180px] bg-slate-100 flex items-center justify-center relative">
+            {!isLoaded && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400 gap-2">
+                    <div className="w-6 h-6 border-2 border-slate-300 border-t-brand-purple rounded-full animate-spin" />
+                    <p className="text-[10px] font-bold">지도를 불러오는 중...</p>
+                </div>
+            )}
+        </div>
+    );
 };
 
 const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void, setInput: (val: string) => void, input: string }) => (
@@ -844,6 +854,13 @@ export default function HomePage() {
                 try {
                     const placeRes = await fetch(`/api/places?q=${encodeURIComponent(data.searchPlaceKeyword)}`);
                     const placeData = await placeRes.json();
+
+                    if (placeRes.status === 401 || placeRes.status === 403) {
+                        const errorMsg = `[카카오 인증 에러] 지도를 표시할 권한이 없어요. 😢\n\n카카오 개발자 앱 설정의 [플랫폼 > Web]에 http://localhost:3000 이 등록되어 있는지 확인해 주세요!`;
+                        setMessages(prev => [...prev, { role: "ai", content: errorMsg }]);
+                        return;
+                    }
+
                     if (placeData.items && placeData.items.length > 0) {
                         setMessages(prev => {
                             const newMessages = [...prev];
