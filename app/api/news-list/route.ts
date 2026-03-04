@@ -15,11 +15,15 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: "API 키가 구성되지 않았습니다." }, { status: 500 });
         }
 
+        console.log(`[News API Hit] Query: ${query}`);
+
         const response = await fetch(
             `https://dapi.kakao.com/v2/search/news?query=${encodeURIComponent(query)}&size=10`,
             {
                 headers: {
                     Authorization: `KakaoAK ${apiKey}`,
+                    "Origin": "http://localhost:3000",
+                    "Referer": "http://localhost:3000",
                 },
             }
         );

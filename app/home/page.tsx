@@ -1135,8 +1135,8 @@ export default function HomePage() {
                 try {
                     // 국내 뉴스 5개, 국제 뉴스 5개 병렬 검색
                     const [domRes, intlRes] = await Promise.all([
-                        fetch(`/api/news?q=${encodeURIComponent("국내 " + data.searchNewsKeyword)}`),
-                        fetch(`/api/news?q=${encodeURIComponent("국제 " + data.searchNewsKeyword)}`)
+                        fetch(`/api/news-list?q=${encodeURIComponent("국내 " + data.searchNewsKeyword)}`),
+                        fetch(`/api/news-list?q=${encodeURIComponent("국제 " + data.searchNewsKeyword)}`)
                     ]);
 
                     const domData = await domRes.json();
