@@ -9,37 +9,56 @@ export async function GET(req: Request) {
     }
 
     try {
-        // 실제 운영 시에는 Google Places API, Kakao Map API 등을 연동합니다.
-        // 현재는 시뮬레이션 데이터를 반환하여 UI 흐름을 확인합니다.
+        const apiKey = process.env.KAKAO_REST_API_KEY;
 
-        console.log(`[Place Search Requested] Query: ${query}`);
-
-        // 검색어에 따른 맞춤형 가짜 데이터 생성
-        let items = [
-            {
-                id: "place-01",
-                name: `${query.replace("추천", "").trim()}`,
-                address: query.includes("서울") ? `서울특별시 종로구 ${query.split(' ')[0]}길 42` :
-                    query.includes("강원") ? `강원특별자치도 강릉시 해안로 123` :
-                        query.includes("인천") ? `인천광역시 남동구 문화로 77` :
-                            query.includes("부산") ? `부산광역시 해운대구 해변로 55` :
-                                `바다님 근처 ${query.split(' ')[0]} 관련 장소`,
-                mapUrl: `https://www.google.com/maps/search/${encodeURIComponent(query)}`,
-                mapEmbedUrl: `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`,
-                category: query.includes("명소") || query.includes("여행") ? "추천" : "장소"
-            }
-        ];
-
-        // 병원 관련 검색일 경우 태그 추가
-        if (query.includes("병원") || query.includes("약국") || query.includes("의원")) {
-            items[0].category = "의료";
-        } else if (query.includes("맛집") || query.includes("식당")) {
-            items[0].category = "음식";
+        if (!apiKey) {
+            console.warn("KAKAO_REST_API_KEY가 없습니다.");
+            return NextResponse.json({ error: "API 키가 구성되지 않았습니다." }, { status: 500 });
         }
+
+        console.log(`[Kakao Debug] Key starts with: ${apiKey.substring(0, 4)}...`);
+        console.log(`[Kakao Place Search] Query: ${query}`);
+
+        const response = await fetch(
+            `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(query)}`,
+            {
+                headers: {
+                    Authorization: `KakaoAK ${apiKey}`,
+                    // 서버 사이드 호출 시 도메인 인증을 위해 아래 헤더들을 추가합니다.
+                    "Origin": "http://localhost:3000",
+                    "Referer": "http://localhost:3000",
+                },
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error("Kakao API Error Response:", data);
+            return NextResponse.json({ error: data.message || "카카오 API 호출에 실패했습니다.", code: data.errorType }, { status: response.status });
+        }
+
+        if (!data.documents || data.documents.length === 0) {
+            console.log(`[Kakao Place Search] No results found for: ${query}`);
+            return NextResponse.json({ items: [] });
+        }
+
+        const items = data.documents.map((doc: any) => ({
+            id: doc.id,
+            name: doc.place_name,
+            address: doc.road_address_name || doc.address_name,
+            phone: doc.phone || "전화번호 정보 없음",
+            mapUrl: doc.place_url,
+            mapEmbedUrl: `https://maps.google.com/maps?q=${doc.y},${doc.x}&t=&z=16&ie=UTF8&iwloc=&output=embed`,
+            category: doc.category_group_name || doc.category_name.split(' > ')[0] || "장소",
+            operatingHours: "정보 확인을 위해 지도를 클릭하세요",
+            lat: doc.y,
+            lng: doc.x
+        }));
 
         return NextResponse.json({ items });
     } catch (error: any) {
-        console.error("Place Search API Error:", error);
+        console.error("Kakao Local API Error:", error);
         return NextResponse.json({ error: "장소 검색 중 오류가 발생했습니다." }, { status: 500 });
     }
 }

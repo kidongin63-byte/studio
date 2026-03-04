@@ -45,6 +45,10 @@ interface Message {
         mapUrl: string;
         mapEmbedUrl?: string;
         category?: string;
+        phone?: string;
+        operatingHours?: string;
+        lat?: string;
+        lng?: string;
     };
     scheduleData?: {
         title: string;
@@ -52,6 +56,48 @@ interface Message {
         time: string;
     };
 }
+
+declare global {
+    interface Window {
+        kakao: any;
+    }
+}
+
+const KakaoMap = ({ lat, lng }: { lat?: string, lng?: string }) => {
+    const mapRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!lat || !lng || !mapRef.current) return;
+
+        const initMap = () => {
+            window.kakao.maps.load(() => {
+                if (!mapRef.current) return;
+                const options = {
+                    center: new window.kakao.maps.LatLng(lat, lng),
+                    level: 3
+                };
+                const map = new window.kakao.maps.Map(mapRef.current, options);
+                const markerPosition = new window.kakao.maps.LatLng(lat, lng);
+                const marker = new window.kakao.maps.Marker({
+                    position: markerPosition
+                });
+                marker.setMap(map);
+            });
+        };
+
+        // 카카오 객체가 로드될 때까지 잠시 기다렸다가 초기화
+        const checkKakao = setInterval(() => {
+            if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
+                initMap();
+                clearInterval(checkKakao);
+            }
+        }, 100);
+
+        return () => clearInterval(checkKakao);
+    }, [lat, lng]);
+
+    return <div ref={mapRef} className="w-full h-full min-h-[180px] bg-slate-100" />;
+};
 
 const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void, setInput: (val: string) => void, input: string }) => (
     <div className="flex flex-col h-full bg-white animate-in slide-in-from-bottom-20 duration-500">
@@ -305,9 +351,32 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                                     </div>
                                                 </div>
                                                 <p className="font-black text-slate-800 text-xl leading-tight mb-2">{msg.placeData.name}</p>
-                                                <div className="flex items-start gap-2 bg-slate-100/50 p-3 rounded-xl border border-slate-100">
-                                                    <MapPin className="w-5 h-5 text-brand-purple shrink-0 mt-0.5" />
-                                                    <p className="text-[16px] text-slate-700 font-black leading-tight">{msg.placeData.address}</p>
+
+                                                <div className="flex flex-col gap-2 bg-slate-100/50 p-3 rounded-xl border border-slate-100">
+                                                    <div className="flex items-start gap-2">
+                                                        <MapPin className="w-5 h-5 text-brand-purple shrink-0 mt-0.5" />
+                                                        <p className="text-[15px] text-slate-700 font-bold leading-tight">
+                                                            <span className="text-slate-900 mr-1">장소 :</span> {msg.placeData.address}
+                                                        </p>
+                                                    </div>
+
+                                                    {msg.placeData.phone && (
+                                                        <div className="flex items-center gap-2">
+                                                            <Phone className="w-5 h-5 text-blue-500 shrink-0" />
+                                                            <p className="text-[15px] text-slate-700 font-bold leading-tight">
+                                                                <span className="text-slate-900 mr-1">TEL :</span> {msg.placeData.phone}
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {msg.placeData.operatingHours && (
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock className="w-5 h-5 text-emerald-500 shrink-0" />
+                                                            <p className="text-[15px] text-slate-700 font-bold leading-tight">
+                                                                <span className="text-slate-900 mr-1">근무시간 :</span> {msg.placeData.operatingHours}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center text-brand-purple shrink-0">
@@ -315,16 +384,9 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                             </div>
                                         </div>
 
-                                        {/* 지도 미리보기 (창 방식) */}
-                                        <div className="rounded-xl overflow-hidden border border-slate-100 bg-white h-[180px] relative">
-                                            <iframe
-                                                width="100%"
-                                                height="100%"
-                                                style={{ border: 0 }}
-                                                loading="lazy"
-                                                allowFullScreen
-                                                src={`https://maps.google.com/maps?q=${encodeURIComponent(msg.placeData.name + " " + msg.placeData.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                                            />
+                                        {/* 지도 미리보기 (카카오 지도 SDK) */}
+                                        <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-100 h-[180px] relative">
+                                            <KakaoMap lat={msg.placeData.lat} lng={msg.placeData.lng} />
                                         </div>
 
                                         <Button
