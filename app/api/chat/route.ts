@@ -56,9 +56,11 @@ export async function POST(req: Request) {
         1. **영상/영화/보여줘**: 메시지에 "영상", "영화", "보여줘", "보여주렴" 등 시청 관련 단어가 있으면 **반드시 'showVideoKeyword'**에만 검색어를 넣으세요.
         2. **음악/노래/틀어줘**: 메시지에 "노래", "음악", "틀어줘", "들려줘" 등 청취 관련 단어가 있으면 **반드시 'playMusicKeyword'**에만 검색어를 넣으세요.
         3. **장소/맛집/병원/여행**: 맛집, 병원, 약국, 여행지 등 특정 장소를 찾는 요청이 있으면 **반드시 'searchPlaceKeyword'**에 검색어를 넣으세요. (예: "종로구 정형외과", "강남역 맛집")
-        4. **일정/약속/기억**: "내일 병원 가", "금요일에 친구 만나" 등 미래의 일정을 언급하면 **반드시 'scheduleData'**에 정보를 넣으세요.
-        5. **내용**: 키워드에는 "장윤정 초혼", "시니어 스트레칭" 같이 검색에 필요한 명사만 정확히 입력하세요.
-        6. **즉시 실행**: 대화로 제안만 하지 말고 즉시 키워드나 데이터를 생성해야 기능이 작동합니다.
+        4. **뉴스/이슈/무슨일**: 오늘 뉴스, 사회 소식, 연예 뉴스 등 정보 요청이 있으면 **반드시 'searchNewsKeyword'**에 검색어를 넣으세요. 특정 주제가 없으면 "최신 주요 뉴스"를 기본값으로 하세요.
+        5. **날씨/비/더워/추워**: 날씨, 온도, 강수 여부 등 기상 정보 요청이 있으면 **반드시 'searchWeatherKeyword'**에 **지역명만** 넣으세요. 지역이 없으면 "천안"을 기본값으로 하세요. (예: "서울", "제주도")
+        6. **일정/약속/기억**: "내일 병원 가", "금요일에 친구 만나" 등 미래의 일정을 언급하면 **반드시 'scheduleData'**에 정보를 넣으세요.
+        7. **내용**: 키워드에는 "장윤정 초혼", "시니어 스트레칭" 같이 검색에 필요한 명사만 정확히 입력하세요. 핵심 키워드가 없으면 "뉴스"라고만 하세요.
+        8. **즉시 실행**: 대화로 제안만 하지 말고 즉시 키워드나 데이터를 생성해야 기능이 작동합니다.
 
         [응답 JSON 구조]
         {
@@ -67,10 +69,12 @@ export async function POST(req: Request) {
           "reason": "판단 근거",
           "medicationChecked": true/false,
           "medicationTaken": true/false/null,
-          "requestDetected": true(음약/영상/장소/일정요청있음)/false(없음),
+          "requestDetected": true(음악/영상/장소/일정/뉴스/날씨 요청있음)/false(없음),
           "playMusicKeyword": "노래제목 또는 null",
           "showVideoKeyword": "영상제목 또는 null",
           "searchPlaceKeyword": "장소명 또는 null",
+          "searchNewsKeyword": "뉴스 키워드 또는 null",
+          "searchWeatherKeyword": "지역명 또는 null",
           "scheduleData": {
             "title": "일정 제목 (예: 정형외과 방문)",
             "date": "YYYY-MM-DD (날짜 미상시 null)",

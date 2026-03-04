@@ -48,12 +48,34 @@ interface PlaceData {
     rating?: string; // 추가: 별점 정보
 }
 
+interface NewsData {
+    title: string;
+    url: string;
+    source: string;
+    datetime: string;
+}
+
+interface WeatherData {
+    location: string;
+    temp: number;
+    feelTemp: number;
+    humidity: number;
+    desc: string;
+    icon: string;
+    wind: number;
+    precipitation: number;
+}
+
 interface Message {
     role: "user" | "ai";
     content: string;
     videoId?: string;
     placeData?: PlaceData; // legacy
     placesData?: PlaceData[]; // new
+    newsData?: NewsData[]; // legacy
+    domesticNews?: NewsData[];
+    intlNews?: NewsData[];
+    weatherData?: WeatherData;
     scheduleData?: {
         title: string;
         date: string;
@@ -502,6 +524,171 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                         </Button>
                                     </div>
                                 )}
+
+                                {msg.weatherData && (
+                                    <div className="mt-4 p-5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-[32px] border border-blue-100 shadow-sm overflow-hidden relative group">
+                                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                                            <Sparkles className="w-20 h-20 text-blue-500" />
+                                        </div>
+                                        <div className="relative z-10">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <div className="bg-white/80 backdrop-blur-sm p-2 rounded-xl text-blue-600 shadow-sm">
+                                                    <MapPin className="w-4 h-4" />
+                                                </div>
+                                                <span className="text-[13px] font-black text-blue-800">
+                                                    {msg.weatherData.location.includes("날씨") ? msg.weatherData.location : `${msg.weatherData.location} 날씨`}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between mb-6">
+                                                <div className="flex items-center gap-4">
+                                                    <span className="text-6xl">{msg.weatherData.icon}</span>
+                                                    <div>
+                                                        <p className="text-4xl font-black text-slate-800 tracking-tighter">{msg.weatherData.temp}°</p>
+                                                        <p className="text-[17px] font-bold text-slate-500">{msg.weatherData.desc}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest mb-1">체감 온도</p>
+                                                    <p className="text-2xl font-black text-blue-600">{msg.weatherData.feelTemp}°</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="bg-white/60 backdrop-blur-sm p-3 rounded-2xl border border-white/50 flex items-center justify-center gap-3">
+                                                    <Volume2 className="w-4 h-4 text-slate-400" />
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">습도</p>
+                                                        <p className="text-sm font-black text-slate-700">{msg.weatherData.humidity}%</p>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white/60 backdrop-blur-sm p-3 rounded-2xl border border-white/50 flex items-center justify-center gap-3">
+                                                    <Zap className="w-4 h-4 text-slate-400" />
+                                                    <div>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">풍속</p>
+                                                        <p className="text-sm font-black text-slate-700">{msg.weatherData.wind} km/h</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {((msg.domesticNews && msg.domesticNews.length > 0) || (msg.intlNews && msg.intlNews.length > 0)) && (
+                                    <div className="mt-4 p-5 bg-white rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-6">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100">
+                                                <Activity className="w-5 h-5" />
+                                            </div>
+                                            <span className="font-black text-slate-800 text-lg tracking-tight">세상 돌아가는 소식 (5+5)</span>
+                                        </div>
+
+                                        {/* 국내 뉴스 섹션 */}
+                                        {msg.domesticNews && msg.domesticNews.length > 0 && (
+                                            <div className="flex flex-col gap-3">
+                                                <div className="flex items-center gap-2 px-1">
+                                                    <div className="w-1.5 h-4 bg-emerald-500 rounded-full" />
+                                                    <span className="font-black text-slate-600 text-sm">국내 주요 소식</span>
+                                                </div>
+                                                <div className="bg-slate-50/50 rounded-2xl p-2 border border-slate-100/50">
+                                                    {msg.domesticNews.map((news, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            onClick={() => window.open(news.url, "_blank")}
+                                                            className="flex items-start gap-3 p-3 hover:bg-white rounded-xl transition-all cursor-pointer group border border-transparent hover:border-slate-100 hover:shadow-sm"
+                                                        >
+                                                            <span className="font-black text-emerald-500 text-sm mt-0.5 shrink-0 opacity-40">{idx + 1}</span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-black text-slate-700 text-[15px] leading-snug group-hover:text-emerald-600 transition-colors line-clamp-2 underline decoration-transparent group-hover:decoration-emerald-200 decoration-2 underline-offset-4">
+                                                                    {news.title}
+                                                                </p>
+                                                                <div className="flex items-center gap-2 mt-1.5 opacity-60">
+                                                                    <span className="text-[10px] font-black text-slate-400">{news.source}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* 국제 뉴스 섹션 */}
+                                        {msg.intlNews && msg.intlNews.length > 0 && (
+                                            <div className="flex flex-col gap-3">
+                                                <div className="flex items-center gap-2 px-1">
+                                                    <div className="w-1.5 h-4 bg-blue-500 rounded-full" />
+                                                    <span className="font-black text-slate-600 text-sm">국제 주요 소식</span>
+                                                </div>
+                                                <div className="bg-slate-50/50 rounded-2xl p-2 border border-slate-100/50">
+                                                    {msg.intlNews.map((news, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            onClick={() => window.open(news.url, "_blank")}
+                                                            className="flex items-start gap-3 p-3 hover:bg-white rounded-xl transition-all cursor-pointer group border border-transparent hover:border-slate-100 hover:shadow-sm"
+                                                        >
+                                                            <span className="font-black text-blue-500 text-sm mt-0.5 shrink-0 opacity-40">{idx + 1}</span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-black text-slate-700 text-[15px] leading-snug group-hover:text-blue-600 transition-colors line-clamp-2 underline decoration-transparent group-hover:decoration-blue-200 decoration-2 underline-offset-4">
+                                                                    {news.title}
+                                                                </p>
+                                                                <div className="flex items-center gap-2 mt-1.5 opacity-60">
+                                                                    <span className="text-[10px] font-black text-slate-400">{news.source}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full text-slate-400 font-bold text-xs h-10 rounded-2xl"
+                                            onClick={() => window.open(`https://search.daum.net/search?w=news&q=${msg.content}`, "_blank")}
+                                        >
+                                            인터넷에서 뉴스 더 찾아보기
+                                            <ChevronRight className="w-3 h-3 ml-1" />
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {msg.newsData && msg.newsData.length > 0 && !msg.domesticNews && (
+                                    <div className="mt-4 p-5 bg-white rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-4">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100">
+                                                <Activity className="w-5 h-5" />
+                                            </div>
+                                            <span className="font-black text-slate-800 text-lg">최신 주요 소식</span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {msg.newsData.map((news, idx) => (
+                                                <div
+                                                    key={idx}
+                                                    onClick={() => window.open(news.url, "_blank")}
+                                                    className="p-4 rounded-2xl bg-slate-50/50 hover:bg-emerald-50/50 border border-slate-100 hover:border-emerald-100 transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-black text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-200 transition-colors">
+                                                            {news.source}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-slate-400">{new Date(news.datetime).toLocaleDateString('ko-KR')}</span>
+                                                    </div>
+                                                    <p className="font-black text-slate-700 text-[15px] leading-snug group-hover:text-slate-900 transition-colors line-clamp-2">
+                                                        {news.title}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            className="w-full text-slate-400 font-bold text-xs"
+                                            onClick={() => window.open(`https://search.daum.net/search?w=news&q=${msg.content}`, "_blank")}
+                                        >
+                                            뉴스 더 보기
+                                            <ChevronRight className="w-3 h-3 ml-1" />
+                                        </Button>
+                                    </div>
+                                )}
                                 {msg.scheduleData && (
                                     <div className="mt-3 p-5 bg-white rounded-2xl border-2 border-brand-purple/20 flex flex-col gap-3 shadow-md animate-in zoom-in-95 duration-300">
                                         <div className="flex items-center gap-3">
@@ -940,6 +1127,52 @@ export default function HomePage() {
                     }
                 } catch (ytError) {
                     console.error("YouTube Search Error:", ytError);
+                }
+            }
+
+            // 뉴스 검색 신호
+            if (data.searchNewsKeyword) {
+                try {
+                    // 국내 뉴스 5개, 국제 뉴스 5개 병렬 검색
+                    const [domRes, intlRes] = await Promise.all([
+                        fetch(`/api/news?q=${encodeURIComponent("국내 " + data.searchNewsKeyword)}`),
+                        fetch(`/api/news?q=${encodeURIComponent("국제 " + data.searchNewsKeyword)}`)
+                    ]);
+
+                    const domData = await domRes.json();
+                    const intlData = await intlRes.json();
+
+                    setMessages(prev => {
+                        const newMessages = [...prev];
+                        newMessages[newMessages.length - 1] = {
+                            ...newMessages[newMessages.length - 1],
+                            domesticNews: domData.items?.slice(0, 5) || [],
+                            intlNews: intlData.items?.slice(0, 5) || []
+                        };
+                        return newMessages;
+                    });
+                } catch (error) {
+                    console.error("News Search Error:", error);
+                }
+            }
+
+            // 날씨 검색 신호
+            if (data.searchWeatherKeyword) {
+                try {
+                    const weatherRes = await fetch(`/api/weather?q=${encodeURIComponent(data.searchWeatherKeyword)}`);
+                    const weatherData = await weatherRes.json();
+                    if (weatherData && !weatherData.error) {
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[newMessages.length - 1] = {
+                                ...newMessages[newMessages.length - 1],
+                                weatherData: weatherData
+                            };
+                            return newMessages;
+                        });
+                    }
+                } catch (error) {
+                    console.error("Weather Search Error:", error);
                 }
             }
 
