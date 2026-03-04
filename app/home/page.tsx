@@ -35,21 +35,25 @@ import {
 import { ko } from "date-fns/locale";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 
+interface PlaceData {
+    name: string;
+    address: string;
+    mapUrl: string;
+    mapEmbedUrl?: string;
+    category?: string;
+    phone?: string;
+    operatingHours?: string;
+    lat?: string;
+    lng?: string;
+    rating?: string; // 추가: 별점 정보
+}
+
 interface Message {
     role: "user" | "ai";
     content: string;
     videoId?: string;
-    placeData?: {
-        name: string;
-        address: string;
-        mapUrl: string;
-        mapEmbedUrl?: string;
-        category?: string;
-        phone?: string;
-        operatingHours?: string;
-        lat?: string;
-        lng?: string;
-    };
+    placeData?: PlaceData; // legacy
+    placesData?: PlaceData[]; // new
     scheduleData?: {
         title: string;
         date: string;
@@ -63,26 +67,50 @@ declare global {
     }
 }
 
-const KakaoMap = ({ lat, lng }: { lat?: string, lng?: string }) => {
+const KakaoMap = ({ places }: { places?: PlaceData[] }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const [isLoaded, setIsLoaded] = useState(false);
 
     useEffect(() => {
-        if (!lat || !lng || !mapRef.current) return;
+        if (!places || places.length === 0 || !mapRef.current) return;
 
         const initMap = () => {
             window.kakao.maps.load(() => {
                 if (!mapRef.current) return;
+
+                const bounds = new window.kakao.maps.LatLngBounds();
+                const centerPos = new window.kakao.maps.LatLng(Number(places[0].lat), Number(places[0].lng));
+
                 const options = {
-                    center: new window.kakao.maps.LatLng(Number(lat), Number(lng)),
+                    center: centerPos,
                     level: 3
                 };
                 const map = new window.kakao.maps.Map(mapRef.current, options);
-                const markerPosition = new window.kakao.maps.LatLng(Number(lat), Number(lng));
-                const marker = new window.kakao.maps.Marker({
-                    position: markerPosition
+
+                places.forEach((place, idx) => {
+                    const position = new window.kakao.maps.LatLng(Number(place.lat), Number(place.lng));
+                    const marker = new window.kakao.maps.Marker({
+                        position: position,
+                        title: place.name
+                    });
+                    marker.setMap(map);
+                    bounds.extend(position);
+
+                    // 다수의 마커가 있을 때 인덱스 표시
+                    if (places.length > 1) {
+                        const content = `<div style="padding:2px 5px; background:white; border:1px solid #A163F1; color:#A163F1; font-weight:black; font-size:10px; border-radius:10px; position:relative; bottom:40px;">${idx + 1}</div>`;
+                        const customOverlay = new window.kakao.maps.CustomOverlay({
+                            position: position,
+                            content: content
+                        });
+                        customOverlay.setMap(map);
+                    }
                 });
-                marker.setMap(map);
+
+                if (places.length > 1) {
+                    map.setBounds(bounds);
+                }
+
                 setIsLoaded(true);
             });
         };
@@ -95,7 +123,7 @@ const KakaoMap = ({ lat, lng }: { lat?: string, lng?: string }) => {
         }, 100);
 
         return () => clearInterval(checkKakao);
-    }, [lat, lng]);
+    }, [places]);
 
     return (
         <div ref={mapRef} className="w-full h-full min-h-[180px] bg-slate-100 flex items-center justify-center relative">
@@ -347,7 +375,73 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                         />
                                     </div>
                                 )}
-                                {msg.placeData && (
+                                {msg.placesData && msg.placesData.length > 0 && (
+                                    <div className="mt-4 p-5 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-4 shadow-sm">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <div className="w-8 h-8 bg-brand-purple/10 rounded-full flex items-center justify-center text-brand-purple">
+                                                <MapPin className="w-4 h-4" />
+                                            </div>
+                                            <span className="font-black text-slate-800">주변 추천 장소</span>
+                                        </div>
+
+                                        {/* 지도 미리보기 */}
+                                        <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-100 h-[220px] relative shadow-inner">
+                                            <KakaoMap places={msg.placesData} />
+                                        </div>
+
+                                        {/* 장소 목록 */}
+                                        <div className="flex flex-col gap-3 max-h-[300px] overflow-y-auto pr-1 hide-scrollbar">
+                                            {msg.placesData.map((place, idx) => (
+                                                <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all active:scale-[0.98]">
+                                                    <div className="flex justify-between items-start gap-2 mb-2">
+                                                        <div className="flex-1">
+                                                            <div className={cn(
+                                                                "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider w-fit mb-1",
+                                                                place.category === "의료" ? "bg-red-50 text-red-600" :
+                                                                    place.category === "음식" ? "bg-orange-50 text-orange-600" : "bg-blue-50 text-blue-600"
+                                                            )}>
+                                                                {place.category || "장소"}
+                                                            </div>
+                                                            <p className="font-black text-slate-800 text-lg leading-tight">{place.name}</p>
+                                                        </div>
+                                                        <div className="flex flex-col items-end gap-1">
+                                                            <div className="w-8 h-8 bg-brand-purple text-white rounded-lg flex items-center justify-center shrink-0 shadow-sm shadow-brand-purple/20">
+                                                                <span className="font-black text-sm">{idx + 1}</span>
+                                                            </div>
+                                                            {place.rating && (
+                                                                <div className="flex items-center gap-0.5 bg-yellow-400/10 px-1.5 py-0.5 rounded-full">
+                                                                    <Sparkles className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" />
+                                                                    <span className="text-[10px] font-black text-yellow-700">{place.rating}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col gap-1.5 mb-4">
+                                                        <div className="flex items-start gap-1.5 text-slate-600">
+                                                            <MapPin className="w-4 h-4 shrink-0 mt-0.5 opacity-40" />
+                                                            <p className="text-[13px] font-bold leading-tight">{place.address}</p>
+                                                        </div>
+                                                        {place.phone && place.phone !== "전화번호 정보 없음" && (
+                                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                                <Phone className="w-3.5 h-3.5 shrink-0 opacity-40" />
+                                                                <p className="text-[12px] font-bold">{place.phone}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <Button
+                                                        className="w-full h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-xs flex items-center justify-center gap-2 border border-slate-200/50"
+                                                        onClick={() => window.open(place.mapUrl, "_blank")}
+                                                    >
+                                                        <ChevronRight className="w-4 h-4 text-brand-purple" />
+                                                        길 찾기 및 상세정보
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {msg.placeData && !msg.placesData && (
                                     <div className="mt-3 p-5 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col gap-3 shadow-sm">
                                         <div className="flex items-start justify-between">
                                             <div className="flex-1">
@@ -396,7 +490,7 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
 
                                         {/* 지도 미리보기 (카카오 지도 SDK) */}
                                         <div className="rounded-xl overflow-hidden border border-slate-100 bg-slate-100 h-[180px] relative">
-                                            <KakaoMap lat={msg.placeData.lat} lng={msg.placeData.lng} />
+                                            <KakaoMap places={[msg.placeData]} />
                                         </div>
 
                                         <Button
@@ -866,7 +960,7 @@ export default function HomePage() {
                             const newMessages = [...prev];
                             newMessages[newMessages.length - 1] = {
                                 ...newMessages[newMessages.length - 1],
-                                placeData: placeData.items[0]
+                                placesData: placeData.items // 모든 검색 결과를 저장
                             };
                             return newMessages;
                         });
