@@ -49,6 +49,7 @@ interface PlaceData {
 }
 
 interface NewsData {
+    category?: string;
     title: string;
     url: string;
     source: string;
@@ -574,13 +575,13 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                     </div>
                                 )}
 
-                                {((msg.domesticNews && msg.domesticNews.length > 0) || (msg.intlNews && msg.intlNews.length > 0)) && (
+                                {((msg.domesticNews && msg.domesticNews.length > 0) || (msg.intlNews && msg.intlNews.length > 0) || (msg.newsData && msg.newsData.length > 0)) && (
                                     <div className="mt-4 p-5 bg-white rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-6">
                                         <div className="flex items-center gap-2 mb-1">
                                             <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100">
                                                 <Activity className="w-5 h-5" />
                                             </div>
-                                            <span className="font-black text-slate-800 text-lg tracking-tight">세상 돌아가는 소식 (5+5)</span>
+                                            <span className="font-black text-slate-800 text-lg tracking-tight">국내 뉴스</span>
                                         </div>
 
                                         {/* 국내 뉴스 섹션 */}
@@ -588,7 +589,7 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                             <div className="flex flex-col gap-3">
                                                 <div className="flex items-center gap-2 px-1">
                                                     <div className="w-1.5 h-4 bg-emerald-500 rounded-full" />
-                                                    <span className="font-black text-slate-600 text-sm">국내 주요 소식</span>
+                                                    <span className="font-black text-slate-600 text-sm">국내 뉴스</span>
                                                 </div>
                                                 <div className="bg-slate-50/50 rounded-2xl p-2 border border-slate-100/50">
                                                     {msg.domesticNews.map((news, idx) => (
@@ -602,9 +603,6 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                                                 <p className="font-black text-slate-700 text-[15px] leading-snug group-hover:text-emerald-600 transition-colors line-clamp-2 underline decoration-transparent group-hover:decoration-emerald-200 decoration-2 underline-offset-4">
                                                                     {news.title}
                                                                 </p>
-                                                                <div className="flex items-center gap-2 mt-1.5 opacity-60">
-                                                                    <span className="text-[10px] font-black text-slate-400">{news.source}</span>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -617,7 +615,7 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                             <div className="flex flex-col gap-3">
                                                 <div className="flex items-center gap-2 px-1">
                                                     <div className="w-1.5 h-4 bg-blue-500 rounded-full" />
-                                                    <span className="font-black text-slate-600 text-sm">국제 주요 소식</span>
+                                                    <span className="font-black text-slate-600 text-sm">국제 뉴스</span>
                                                 </div>
                                                 <div className="bg-slate-50/50 rounded-2xl p-2 border border-slate-100/50">
                                                     {msg.intlNews.map((news, idx) => (
@@ -631,9 +629,6 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                                                 <p className="font-black text-slate-700 text-[15px] leading-snug group-hover:text-blue-600 transition-colors line-clamp-2 underline decoration-transparent group-hover:decoration-blue-200 decoration-2 underline-offset-4">
                                                                     {news.title}
                                                                 </p>
-                                                                <div className="flex items-center gap-2 mt-1.5 opacity-60">
-                                                                    <span className="text-[10px] font-black text-slate-400">{news.source}</span>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     ))}
@@ -641,54 +636,47 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                             </div>
                                         )}
 
-                                        <Button
-                                            variant="ghost"
-                                            className="w-full text-slate-400 font-bold text-xs h-10 rounded-2xl"
-                                            onClick={() => window.open(`https://search.daum.net/search?w=news&q=${msg.content}`, "_blank")}
-                                        >
-                                            인터넷에서 뉴스 더 찾아보기
-                                            <ChevronRight className="w-3 h-3 ml-1" />
-                                        </Button>
+                                        {/* 레거시(통합) 및 HOT_NEWS 섹션 */}
+                                        {msg.newsData && msg.newsData.length > 0 && (!msg.domesticNews || msg.domesticNews.length === 0) && (
+                                            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-4">
+                                                {msg.newsData.map((news, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        onClick={() => window.open(news.url, "_blank")}
+                                                        className="flex flex-col gap-1 cursor-pointer group"
+                                                    >
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            {news.category && (
+                                                                <span className="text-[11px] font-black text-brand-purple">
+                                                                    {news.category}
+                                                                </span>
+                                                            )}
+                                                            <div className="w-1 h-1 bg-slate-300 rounded-full" />
+                                                            <span className="text-[10px] font-bold text-slate-400">{news.source !== "반디뉴스" ? news.source : "뉴스"}</span>
+                                                        </div>
+                                                        <div className="flex items-start gap-2">
+                                                            <span className="font-black text-slate-300 text-xs mt-0.5 shrink-0">{idx + 1}</span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="font-bold text-slate-700 text-[16px] leading-snug group-hover:text-brand-purple transition-colors line-clamp-2">
+                                                                    {news.title.replace(`[${news.category}] `, "")}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full text-slate-400 font-bold text-[11px] h-8 rounded-xl bg-slate-50/50 mt-1"
+                                                    onClick={() => window.open(`https://search.daum.net/search?w=news&q=${msg.content}`, "_blank")}
+                                                >
+                                                    뉴스 기사를 더 찾아보려면 눌러주세요
+                                                    <ChevronRight className="w-3 h-3 ml-1" />
+                                                </Button>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
-                                {msg.newsData && msg.newsData.length > 0 && !msg.domesticNews && (
-                                    <div className="mt-4 p-5 bg-white rounded-[32px] border border-slate-100 shadow-sm flex flex-col gap-4">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100">
-                                                <Activity className="w-5 h-5" />
-                                            </div>
-                                            <span className="font-black text-slate-800 text-lg">최신 주요 소식</span>
-                                        </div>
-                                        <div className="space-y-3">
-                                            {msg.newsData.map((news, idx) => (
-                                                <div
-                                                    key={idx}
-                                                    onClick={() => window.open(news.url, "_blank")}
-                                                    className="p-4 rounded-2xl bg-slate-50/50 hover:bg-emerald-50/50 border border-slate-100 hover:border-emerald-100 transition-all cursor-pointer group"
-                                                >
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-black text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-200 transition-colors">
-                                                            {news.source}
-                                                        </span>
-                                                        <span className="text-[10px] font-bold text-slate-400">{new Date(news.datetime).toLocaleDateString('ko-KR')}</span>
-                                                    </div>
-                                                    <p className="font-black text-slate-700 text-[15px] leading-snug group-hover:text-slate-900 transition-colors line-clamp-2">
-                                                        {news.title}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            className="w-full text-slate-400 font-bold text-xs"
-                                            onClick={() => window.open(`https://search.daum.net/search?w=news&q=${msg.content}`, "_blank")}
-                                        >
-                                            뉴스 더 보기
-                                            <ChevronRight className="w-3 h-3 ml-1" />
-                                        </Button>
-                                    </div>
-                                )}
                                 {msg.scheduleData && (
                                     <div className="mt-3 p-5 bg-white rounded-2xl border-2 border-brand-purple/20 flex flex-col gap-3 shadow-md animate-in zoom-in-95 duration-300">
                                         <div className="flex items-center gap-3">
@@ -1133,24 +1121,38 @@ export default function HomePage() {
             // 뉴스 검색 신호
             if (data.searchNewsKeyword) {
                 try {
-                    // 국내 뉴스 5개, 국제 뉴스 5개 병렬 검색
-                    const [domRes, intlRes] = await Promise.all([
-                        fetch(`/api/news-list?q=${encodeURIComponent("국내 " + data.searchNewsKeyword)}`),
-                        fetch(`/api/news-list?q=${encodeURIComponent("국제 " + data.searchNewsKeyword)}`)
-                    ]);
+                    if (data.searchNewsKeyword === "HOT_NEWS") {
+                        const res = await fetch(`/api/news-list?q=HOT_NEWS`);
+                        const newsData = await res.ok ? await res.json() : { items: [] };
 
-                    const domData = await domRes.json();
-                    const intlData = await intlRes.json();
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[newMessages.length - 1] = {
+                                ...newMessages[newMessages.length - 1],
+                                newsData: newsData.items || []
+                            };
+                            return newMessages;
+                        });
+                    } else {
+                        // 기존 특정 키워드 뉴스 검색
+                        const [domRes, intlRes] = await Promise.all([
+                            fetch(`/api/news-list?q=${encodeURIComponent("국내 " + data.searchNewsKeyword)}`),
+                            fetch(`/api/news-list?q=${encodeURIComponent("국제 " + data.searchNewsKeyword)}`)
+                        ]);
 
-                    setMessages(prev => {
-                        const newMessages = [...prev];
-                        newMessages[newMessages.length - 1] = {
-                            ...newMessages[newMessages.length - 1],
-                            domesticNews: domData.items?.slice(0, 5) || [],
-                            intlNews: intlData.items?.slice(0, 5) || []
-                        };
-                        return newMessages;
-                    });
+                        const domData = await domRes.ok ? await domRes.json() : { items: [] };
+                        const intlData = await intlRes.ok ? await intlRes.json() : { items: [] };
+
+                        setMessages(prev => {
+                            const newMessages = [...prev];
+                            newMessages[newMessages.length - 1] = {
+                                ...newMessages[newMessages.length - 1],
+                                domesticNews: domData.items?.slice(0, 5) || [],
+                                intlNews: intlData.items?.slice(0, 5) || []
+                            };
+                            return newMessages;
+                        });
+                    }
                 } catch (error) {
                     console.error("News Search Error:", error);
                 }
