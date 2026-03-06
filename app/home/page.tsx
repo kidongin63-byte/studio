@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from "next/image";
 import {
     Mic, Send, Keyboard, Heart, Sparkles, MessageCircle, Pencil,
-    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight, ChevronLeft, Zap, SlidersHorizontal, Calendar, Clock
+    BarChart3, AlertCircle, Phone, MapPin, Pill, Activity, Settings, X, Volume2, ChevronRight, ChevronLeft, Zap, SlidersHorizontal, Calendar, Clock, Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import YouTube from "react-youtube";
@@ -25,6 +25,8 @@ import {
     eachDayOfInterval,
     isSameMonth,
     isSameDay,
+    isSameWeek,
+    isSameYear,
     addYears,
     subYears,
     getYear,
@@ -50,6 +52,7 @@ interface PlaceData {
 
 interface NewsData {
     category?: string;
+    type?: 'domestic' | 'intl';
     title: string;
     url: string;
     source: string;
@@ -159,6 +162,7 @@ const KakaoMap = ({ places }: { places?: PlaceData[] }) => {
         </div>
     );
 };
+
 
 const MemoView = ({ setHomeView, setInput, input }: { setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void, setInput: (val: string) => void, input: string }) => (
     <div className="flex flex-col h-full bg-white animate-in slide-in-from-bottom-20 duration-500">
@@ -292,18 +296,20 @@ const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOp
 
                 <div className="flex gap-4">
                     <Button
+                        variant="outline"
                         onClick={() => setHomeView("memo")}
-                        className="flex-1 h-28 rounded-[28px] bg-white border border-slate-100 flex flex-col items-center justify-center gap-3 shadow-md shadow-slate-200/40 hover:border-brand-purple/30 hover:bg-brand-purple/5 transition-all group"
+                        className="flex-1 h-28 rounded-[28px] bg-white border-slate-200 flex flex-col items-center justify-center gap-3 shadow-md shadow-slate-200/40 hover:border-brand-purple/30 hover:bg-brand-purple/5 transition-all group"
                     >
                         <div className="w-10 h-10 bg-brand-purple/10 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Pencil className="w-5 h-5 text-brand-purple" />
                         </div>
-                        <span className="text-lg font-black text-slate-700">메모 작성</span>
+                        <span className="text-lg font-black text-slate-800">메모 작성</span>
                     </Button>
 
                     <Button
+                        variant="outline"
                         onClick={() => setHomeView("calendar")}
-                        className="flex-1 h-28 rounded-[28px] bg-white border border-slate-100 flex flex-col items-center justify-center gap-3 shadow-md shadow-slate-200/40 hover:border-brand-purple/30 hover:bg-brand-purple/5 transition-all group relative overflow-hidden"
+                        className="flex-1 h-28 rounded-[28px] bg-white border-slate-200 flex flex-col items-center justify-center gap-3 shadow-md shadow-slate-200/40 hover:border-brand-purple/30 hover:bg-brand-purple/5 transition-all group relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 w-10 h-10 bg-emerald-500/5 rounded-bl-3xl -mr-3 -mt-3 transition-transform group-hover:scale-150" />
 
@@ -313,7 +319,7 @@ const DashboardView = ({ setHomeView, setActiveTab, toggleVoice, setIsSettingsOp
                                 <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-bounce" />
                             </div>
                         </div>
-                        <span className="text-lg font-black text-slate-700">달력 보기</span>
+                        <span className="text-lg font-black text-slate-800">달력 보기</span>
                     </Button>
                 </div>
 
@@ -636,9 +642,27 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                             </div>
                                         )}
 
-                                        {/* 레거시(통합) 및 HOT_NEWS 섹션 */}
+                                        {/* 레거시(통합) 및 HOT_NEWS/INTL_HOT_NEWS 섹션 */}
                                         {msg.newsData && msg.newsData.length > 0 && (!msg.domesticNews || msg.domesticNews.length === 0) && (
-                                            <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-4">
+                                            <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-4">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    {msg.newsData[0].type === 'intl' ? (
+                                                        <>
+                                                            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-500 border border-blue-100">
+                                                                <Globe className="w-4 h-4" />
+                                                            </div>
+                                                            <span className="font-black text-slate-800 text-md tracking-tight">해외 뉴스</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-500 border border-emerald-100">
+                                                                <Activity className="w-4 h-4" />
+                                                            </div>
+                                                            <span className="font-black text-slate-800 text-md tracking-tight">국내 뉴스</span>
+                                                        </>
+                                                    )}
+                                                </div>
+
                                                 {msg.newsData.map((news, idx) => (
                                                     <div
                                                         key={idx}
@@ -658,7 +682,7 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
                                                             <span className="font-black text-slate-300 text-xs mt-0.5 shrink-0">{idx + 1}</span>
                                                             <div className="flex-1 min-w-0">
                                                                 <p className="font-bold text-slate-700 text-[16px] leading-snug group-hover:text-brand-purple transition-colors line-clamp-2">
-                                                                    {news.title.replace(`[${news.category}] `, "")}
+                                                                    {news.title.replace(/^\[.*?\]\s*/, "")}
                                                                 </p>
                                                             </div>
                                                         </div>
@@ -776,20 +800,19 @@ const ChatView = ({ messages, input, setInput, handleSendMessage, toggleVoice, s
 );
 
 
-const CalendarView = ({ setHomeView }: { setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void }) => {
+const CalendarView = ({ setHomeView, setSelectedSchedule, setIsScheduleDetailOpen, schedules, setIsScheduleAddOpen, setNewSchedule, setIsPeriodModalOpen, setViewPeriod }: {
+    setHomeView: (view: "dashboard" | "chat" | "memo" | "calendar") => void,
+    setSelectedSchedule: (schedule: any) => void,
+    setIsScheduleDetailOpen: (open: boolean) => void,
+    schedules: any[],
+    setIsScheduleAddOpen: (open: boolean) => void,
+    setNewSchedule: (schedule: { title: string, date: string, time: string }) => void,
+    setIsPeriodModalOpen: (open: boolean) => void,
+    setViewPeriod: (period: "week" | "month" | "year") => void
+}) => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [viewMode, setViewMode] = useState<"month" | "year" | "day">("month");
-    const [schedules, setSchedules] = useState<any[]>([]);
 
-    useEffect(() => {
-        // Firebase에서 일정 가져오기
-        const q = query(collection(db, "schedules"));
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setSchedules(data);
-        });
-        return () => unsubscribe();
-    }, []);
 
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
@@ -872,11 +895,25 @@ const CalendarView = ({ setHomeView }: { setHomeView: (view: "dashboard" | "chat
                         const { lunarDay, jieQi, isFestival } = getLunarInfo(day);
                         const isCurrentMonth = isSameMonth(day, monthStart);
                         const isToday = isSameDay(day, new Date());
-                        const daySchedules = schedules.filter(s => s.date === format(day, "yyyy-MM-dd"));
+                        const daySchedulesAll = schedules.filter(s => s.date === format(day, "yyyy-MM-dd"));
+                        // 제목/날짜 중복 제거 필터링
+                        const daySchedules = daySchedulesAll.filter((s, index, self) =>
+                            index === self.findIndex((t) => (
+                                t.title === s.title && t.date === s.date
+                            ))
+                        );
 
                         return (
                             <div
                                 key={day.toString()}
+                                onClick={() => {
+                                    setNewSchedule({
+                                        title: "",
+                                        date: format(day, "yyyy-MM-dd"),
+                                        time: format(new Date(), "HH:mm")
+                                    });
+                                    setIsScheduleAddOpen(true);
+                                }}
                                 className={cn(
                                     "min-h-[100px] bg-white p-2 flex flex-col gap-1 transition-colors hover:bg-slate-50 cursor-pointer",
                                     !isCurrentMonth && "bg-slate-50/50 opacity-40"
@@ -905,7 +942,15 @@ const CalendarView = ({ setHomeView }: { setHomeView: (view: "dashboard" | "chat
 
                                 <div className="flex flex-col gap-0.5 mt-1 overflow-hidden">
                                     {daySchedules.map((s, idx) => (
-                                        <div key={idx} className="text-[10px] bg-brand-purple/10 text-brand-purple px-1 py-0.5 rounded truncate font-bold">
+                                        <div
+                                            key={idx}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedSchedule(s);
+                                                setIsScheduleDetailOpen(true);
+                                            }}
+                                            className="text-[10px] bg-brand-purple/10 text-brand-purple px-1 py-0.5 rounded truncate font-bold hover:bg-brand-purple/20 transition-colors"
+                                        >
                                             {s.title} {s.time && `(${s.time})`}
                                         </div>
                                     ))}
@@ -916,43 +961,83 @@ const CalendarView = ({ setHomeView }: { setHomeView: (view: "dashboard" | "chat
                 </div>
 
                 <div className="mt-8 pb-10">
-                    <h3 className="text-xl font-black text-slate-800 mb-4 flex items-center gap-2">
-                        <Zap className="w-5 h-5 text-brand-purple" />
-                        이번 달 주요 일정
-                    </h3>
-                    <div className="space-y-3">
+                    <div className="flex justify-between items-end mb-6">
+                        <h3 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                            <Zap className="w-6 h-6 text-brand-purple" />
+                            오늘의 일정
+                        </h3>
+                        <div className="flex gap-2">
+                            {["week", "month", "year"].map((p) => (
+                                <Button
+                                    key={p}
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setViewPeriod(p as any);
+                                        setIsPeriodModalOpen(true);
+                                    }}
+                                    className="h-8 px-3 rounded-xl bg-brand-purple/5 text-brand-purple font-black text-xs hover:bg-brand-purple/10"
+                                >
+                                    {p === "week" ? "주간" : p === "month" ? "월간" : "연간"}
+                                </Button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
                         {schedules
-                            .filter(s => isSameMonth(new Date(s.date), currentDate))
-                            .sort((a, b) => a.date.localeCompare(b.date))
+                            .filter(s => isSameDay(new Date(s.date), new Date()))
+                            .filter((s, index, self) =>
+                                index === self.findIndex((t) => (
+                                    t.title === s.title && t.date === s.date && t.time === s.time
+                                ))
+                            )
+                            .sort((a, b) => a.time.localeCompare(b.time))
                             .map((s, idx) => (
-                                <div key={idx} className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-slate-50 rounded-2xl flex flex-col items-center justify-center shrink-0">
-                                        <span className="text-[10px] font-bold text-slate-400">{format(new Date(s.date), "M월")}</span>
-                                        <span className="text-lg font-black text-brand-purple">{format(new Date(s.date), "d")}</span>
+                                <div key={idx} className="bg-white p-6 rounded-[34px] border-2 border-slate-100 shadow-sm flex items-center gap-6">
+                                    <div className="w-20 h-20 bg-brand-purple/5 rounded-[28px] flex flex-col items-center justify-center shrink-0 border border-brand-purple/10">
+                                        <span className="text-base font-black text-slate-500">{format(new Date(s.date), "M월")}</span>
+                                        <span className="text-3xl font-black text-brand-purple leading-tight">{format(new Date(s.date), "d")}</span>
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="text-lg font-black text-slate-800">
-                                            {s.title} {s.time && `(${s.time})`}
+                                    <div className="flex-1 space-y-2">
+                                        <div className="text-2xl font-black text-slate-800 leading-tight">
+                                            {s.title}
                                         </div>
-                                        <div className="text-sm font-bold text-slate-400 flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
+                                        <div className="text-xl font-black text-slate-400 flex items-center gap-2">
+                                            <Clock className="w-5 h-5 text-brand-purple/40" />
                                             {s.time}
                                         </div>
                                     </div>
                                     <div className={cn(
-                                        "px-3 py-1 rounded-full text-[12px] font-bold",
+                                        "px-4 py-2 rounded-2xl text-[14px] font-black",
                                         s.status === "completed" ? "bg-emerald-100 text-emerald-600" : "bg-blue-100 text-blue-600"
                                     )}>
                                         {s.status === "completed" ? "완료" : "예정"}
                                     </div>
                                 </div>
                             ))}
+                        {schedules.filter(s => isSameDay(new Date(s.date), new Date())).length === 0 && (
+                            <div className="py-12 text-center bg-slate-50/50 rounded-[40px] border-2 border-dashed border-slate-200">
+                                <p className="text-slate-400 font-bold text-lg">오늘 등록된 일정이 없어요.</p>
+                                <p className="text-slate-300 text-sm mt-1">새 일정을 직접 적어보세요!</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
             <div className="p-4 bg-white border-t border-slate-100 shrink-0 flex gap-3">
-                <Button className="flex-1 h-14 rounded-2xl bg-brand-purple text-white text-lg font-black shadow-lg shadow-brand-purple/20">
+                <Button
+                    onClick={() => {
+                        setNewSchedule({
+                            title: "",
+                            date: format(new Date(), "yyyy-MM-dd"),
+                            time: format(new Date(), "HH:mm")
+                        });
+                        setIsScheduleAddOpen(true);
+                    }}
+                    className="w-full h-14 rounded-2xl bg-brand-purple text-white text-lg font-black shadow-lg shadow-brand-purple/20"
+                >
                     <Pencil className="w-5 h-5 mr-2" />
                     새 일정 직접 적기
                 </Button>
@@ -978,6 +1063,23 @@ export default function HomePage() {
     const [selectedVoice, setSelectedVoice] = useState<number>(0);
     const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
     const [currentPlayingVideoId, setCurrentPlayingVideoId] = useState<string | null>(null);
+    const [selectedSchedule, setSelectedSchedule] = useState<any>(null); // Added state
+    const [isScheduleDetailOpen, setIsScheduleDetailOpen] = useState(false); // Added state
+    const [isScheduleAddOpen, setIsScheduleAddOpen] = useState(false);
+    const [newSchedule, setNewSchedule] = useState({ title: "", date: "", time: "" });
+    const [isPeriodModalOpen, setIsPeriodModalOpen] = useState(false);
+    const [viewPeriod, setViewPeriod] = useState<"week" | "month" | "year">("month");
+    const [schedules, setSchedules] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Firebase에서 일정 가져오기 (전역 관리)
+        const q = query(collection(db, "schedules"));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setSchedules(data);
+        });
+        return () => unsubscribe();
+    }, []);
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const recognitionRef = useRef<any>(null);
@@ -1205,8 +1307,21 @@ export default function HomePage() {
                 }
             }
 
-            // 일정 추가 신호가 있으면 말풍선에 데이터 추가
+            // 일정 추가 신호가 있으면 말풍선에 데이터 추가 및 즉시 저장
             if (data.scheduleData) {
+                // 중복 체크 후 저장
+                const isDuplicate = schedules.some(s =>
+                    s.title === data.scheduleData.title &&
+                    s.date === data.scheduleData.date
+                );
+
+                if (!isDuplicate) {
+                    await saveSchedule("kim-grandma-01", data.scheduleData);
+                    console.log("[Schedule] New schedule saved:", data.scheduleData);
+                } else {
+                    console.log("[Schedule] Duplicate schedule skipped:", data.scheduleData);
+                }
+
                 setMessages(prev => {
                     const newMessages = [...prev];
                     newMessages[newMessages.length - 1] = {
@@ -1272,6 +1387,13 @@ export default function HomePage() {
                         /> :
                             homeView === "calendar" ? <CalendarView
                                 setHomeView={setHomeView}
+                                setSelectedSchedule={setSelectedSchedule}
+                                setIsScheduleDetailOpen={setIsScheduleDetailOpen}
+                                schedules={schedules}
+                                setIsScheduleAddOpen={setIsScheduleAddOpen}
+                                setNewSchedule={setNewSchedule}
+                                setIsPeriodModalOpen={setIsPeriodModalOpen}
+                                setViewPeriod={setViewPeriod}
                             /> :
                                 <MemoView
                                     setHomeView={setHomeView}
@@ -1578,7 +1700,226 @@ export default function HomePage() {
                 </div>
             )}
 
-            {/* 숨겨진 유튜브 오디오 플레이어 (브라우저 자동재생 정책 대응을 위해 display:none 대신 화면 밖 배치) */}
+            {/* 일정 직접 추가 모달 */}
+            {isScheduleAddOpen && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsScheduleAddOpen(false)} />
+                    <div
+                        className="relative w-full max-w-[340px] rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-200"
+                        style={{ backgroundColor: 'white', opacity: 1 }}
+                    >
+                        <div className="p-7 space-y-5 bg-white">
+                            <div className="flex justify-between items-center mb-2">
+                                <div className="w-14 h-14 bg-brand-purple/10 rounded-2xl flex items-center justify-center text-brand-purple">
+                                    <Pencil className="w-7 h-7" />
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full hover:bg-slate-100 w-12 h-12"
+                                    onClick={() => setIsScheduleAddOpen(false)}
+                                >
+                                    <X className="w-8 h-8 text-slate-400" />
+                                </Button>
+                            </div>
+
+                            <div className="space-y-1">
+                                <h2 className="text-[32px] font-black text-slate-800 leading-tight tracking-tight">
+                                    일정 추가하기
+                                </h2>
+                            </div>
+
+                            <div className="space-y-5">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-black text-slate-500 ml-1">일정 내용</label>
+                                    <input
+                                        type="text"
+                                        placeholder="어떤 일인가요? (예: 병원 가기)"
+                                        className="w-full h-20 bg-slate-50 border-2 border-slate-100 rounded-[24px] px-6 font-black text-2xl outline-none focus:border-brand-purple/40 focus:bg-white transition-all placeholder:text-slate-300"
+                                        value={newSchedule.title}
+                                        onChange={(e) => setNewSchedule({ ...newSchedule, title: e.target.value })}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-black text-slate-500 ml-1">날짜</label>
+                                        <input
+                                            type="date"
+                                            className="w-full h-18 bg-slate-50 border-2 border-slate-100 rounded-[24px] px-4 font-black text-xl outline-none focus:border-brand-purple/40 focus:bg-white transition-all"
+                                            value={newSchedule.date}
+                                            onChange={(e) => setNewSchedule({ ...newSchedule, date: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-black text-slate-500 ml-1">시간</label>
+                                        <input
+                                            type="time"
+                                            className="w-full h-18 bg-slate-50 border-2 border-slate-100 rounded-[24px] px-4 font-black text-xl outline-none focus:border-brand-purple/40 focus:bg-white transition-all"
+                                            value={newSchedule.time}
+                                            onChange={(e) => setNewSchedule({ ...newSchedule, time: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-4">
+                                <Button
+                                    className="w-full h-20 rounded-[28px] bg-brand-purple hover:bg-brand-purple/95 text-white text-[24px] font-black shadow-[0_12px_24px_rgba(161,99,241,0.25)] transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                                    disabled={!newSchedule.title || !newSchedule.date}
+                                    onClick={async () => {
+                                        if (!newSchedule.title || !newSchedule.date) return;
+                                        try {
+                                            const result = await saveSchedule("kim-grandma-01", newSchedule);
+                                            if (result) {
+                                                alert("일정이 저장되었습니다! ✨");
+                                                setIsScheduleAddOpen(false);
+                                                setNewSchedule({ title: "", date: "", time: "" });
+                                            } else {
+                                                throw new Error("Save returned null");
+                                            }
+                                        } catch (e) {
+                                            console.error("Save Error:", e);
+                                            alert("아이구, 일정 저장에 실패했어요. 다시 시도해 주시겠어요?");
+                                        }
+                                    }}
+                                >
+                                    저장하기
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 일정 상세 보기 모달 */}
+            {isScheduleDetailOpen && selectedSchedule && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 animate-in fade-in duration-300">
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsScheduleDetailOpen(false)} />
+                    <div className="relative w-full max-w-[340px] bg-white rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-slate-200">
+                        <div className="p-7 space-y-6">
+                            <div className="flex justify-between items-center">
+                                <div className="w-12 h-12 bg-brand-purple/10 rounded-2xl flex items-center justify-center text-brand-purple">
+                                    <Clock className="w-6 h-6" />
+                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="rounded-full hover:bg-slate-100 w-10 h-10"
+                                    onClick={() => setIsScheduleDetailOpen(false)}
+                                >
+                                    <X className="w-6 h-6 text-slate-400" />
+                                </Button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2 text-brand-purple font-black text-xs tracking-wider uppercase">
+                                        <Zap className="w-3 h-3" />
+                                        일정 상세
+                                    </div>
+                                    <h2 className="text-2xl font-black text-slate-800 leading-tight">
+                                        {selectedSchedule.title}
+                                    </h2>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
+                                        <div className="text-[10px] font-bold text-slate-400 mb-1">날짜</div>
+                                        <div className="text-sm font-black text-slate-700">{selectedSchedule.date}</div>
+                                    </div>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100/50">
+                                        <div className="text-[10px] font-bold text-slate-400 mb-1">시간</div>
+                                        <div className="text-sm font-black text-slate-700">{selectedSchedule.time || "시간 미정"}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <Button
+                                    className="w-full h-14 rounded-2xl bg-brand-purple text-white text-lg font-black shadow-lg shadow-brand-purple/20 transition-all active:scale-95"
+                                    onClick={() => setIsScheduleDetailOpen(false)}
+                                >
+                                    확인
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 기간별 일정 보기 팝업 모달 */}
+            {isPeriodModalOpen && (
+                <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setIsPeriodModalOpen(false)} />
+                    <div
+                        className="relative w-full max-w-[440px] h-[85vh] rounded-[40px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10 duration-500 border border-slate-200"
+                        style={{ backgroundColor: 'white', opacity: 1 }}
+                    >
+                        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+                            <h3 className="text-[34px] font-black text-slate-800 tracking-tight">
+                                {viewPeriod === "week" ? "주간" : viewPeriod === "month" ? "월간" : "연간"} 일정
+                            </h3>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-full hover:bg-slate-100 w-14 h-14"
+                                onClick={() => setIsPeriodModalOpen(false)}
+                            >
+                                <X className="w-10 h-10 text-slate-400" />
+                            </Button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-8 space-y-6">
+                            {schedules
+                                .filter(s => {
+                                    const d = new Date(s.date);
+                                    if (viewPeriod === "week") return isSameWeek(d, new Date(), { weekStartsOn: 0 });
+                                    if (viewPeriod === "month") return isSameMonth(d, new Date());
+                                    if (viewPeriod === "year") return isSameYear(d, new Date());
+                                    return false;
+                                })
+                                .filter((s, index, self) =>
+                                    index === self.findIndex((t) => (
+                                        t.title === s.title && t.date === s.date && t.time === s.time
+                                    ))
+                                )
+                                .sort((a, b) => a.date.localeCompare(b.date))
+                                .map((s, idx) => (
+                                    <div key={idx} className="bg-slate-50 p-6 rounded-[34px] border-2 border-white shadow-sm flex items-center gap-6">
+                                        <div className="w-22 h-22 bg-white rounded-[28px] flex flex-col items-center justify-center shrink-0 border border-slate-100 shadow-sm px-4">
+                                            <span className="text-lg font-black text-slate-500">{format(new Date(s.date), "M월")}</span>
+                                            <span className="text-[40px] font-black text-brand-purple leading-none">{format(new Date(s.date), "d")}</span>
+                                        </div>
+                                        <div className="flex-1 space-y-2">
+                                            <div className="text-[28px] font-black text-slate-800 leading-tight">
+                                                {s.title}
+                                            </div>
+                                            <div className="text-[22px] font-black text-slate-400 flex items-center gap-2">
+                                                <Clock className="w-6 h-6 text-brand-purple/40" />
+                                                {s.time}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            {schedules.filter(s => {
+                                const d = new Date(s.date);
+                                if (viewPeriod === "week") return isSameWeek(d, new Date(), { weekStartsOn: 0 });
+                                if (viewPeriod === "month") return isSameMonth(d, new Date());
+                                if (viewPeriod === "year") return isSameYear(d, new Date());
+                                return false;
+                            }).length === 0 && (
+                                    <div className="h-full flex flex-col items-center justify-center py-24 opacity-30">
+                                        <Calendar className="w-24 h-24 mb-4" />
+                                        <p className="font-black text-3xl">일정이 하나도 없어요!</p>
+                                    </div>
+                                )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 숨겨진 유튜브 오디오 플레이어 */}
             {currentPlayingVideoId && (
                 <div className="fixed -top-full -left-full w-1 h-1 opacity-0 pointer-events-none overflow-hidden">
                     <YouTube
